@@ -200,6 +200,9 @@ class KidsClockApp {
 
     // Modal Functions
     openModal(eventId = null) {
+        // Close settings panel if open to avoid z-index conflicts
+        this.closeSettings();
+
         this.editingEventId = eventId;
         const modal = document.getElementById('eventModal');
         const modalTitle = document.getElementById('modalTitle');
@@ -902,11 +905,11 @@ class KidsClockApp {
             header.style.background = `linear-gradient(135deg, ${bgColor1}, ${bgColor2})`;
         }
 
-        // Apply to clock container
+        // Remove clock container background - make it transparent
         const clockContainer = document.querySelector('.clock-container');
         if (clockContainer) {
-            clockContainer.style.background = `rgba(255, 255, 255, ${luminance > 0.6 ? 0.3 : 0.1})`;
-            clockContainer.style.backdropFilter = 'blur(10px)';
+            clockContainer.style.background = 'transparent';
+            clockContainer.style.backdropFilter = 'none';
         }
     }
 }

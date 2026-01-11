@@ -73,10 +73,10 @@ header h1 {
 
 /* Clock Container */
 .clock-container {
-    background: white;
+    background: transparent;
     border-radius: 30px;
     padding: 40px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     margin-bottom: 30px;
     animation: fadeIn 0.8s ease;
 }
@@ -130,15 +130,15 @@ header h1 {
 .time-display {
     font-size: 5em;
     font-weight: bold;
-    color: #667eea;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 5px;
     margin-bottom: 20px;
 }
 
 .date-display {
     font-size: 1.5em;
-    color: #666;
+    color: rgba(255, 255, 255, 0.8);
     margin-top: 15px;
 }
 
