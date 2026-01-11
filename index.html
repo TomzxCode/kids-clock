@@ -23,11 +23,6 @@
         <!-- Main Clock Display -->
         <main id="mainView">
             <div class="clock-container">
-                <div class="clock-type-toggle">
-                    <button id="digitalBtn" class="toggle-btn active">Digital</button>
-                    <button id="analogBtn" class="toggle-btn">Analog</button>
-                </div>
-
                 <!-- Digital Clock -->
                 <div id="digitalClock" class="clock-display">
                     <div class="time-display">
@@ -70,17 +65,6 @@
                     </svg>
                 </div>
             </div>
-
-            <!-- Upcoming Events -->
-            <div class="upcoming-events">
-                <h2>📅 Upcoming Events</h2>
-                <div id="eventsList" class="events-list">
-                    <p class="no-events">No events scheduled yet!</p>
-                </div>
-            </div>
-
-            <!-- Add Event Button -->
-            <button id="addEventBtn" class="add-event-btn">➕ Add New Event</button>
         </main>
 
         <!-- Event Modal -->
@@ -115,6 +99,12 @@
                         <div class="form-group">
                             <label for="announcementText">Announcement Message:</label>
                             <textarea id="announcementText" class="input-field" rows="3" placeholder="Time to wash your hands!"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="eventVoice">Voice (optional - overrides default):</label>
+                            <select id="eventVoice" class="input-field">
+                                <option value="">Use Default Voice</option>
+                            </select>
                         </div>
                     </div>
 
@@ -167,6 +157,46 @@
                     <button class="close-btn" id="closeSettings">✖️</button>
                 </div>
                 <div class="modal-body">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">⏰ Clock Display</h3>
+
+                    <div class="form-group">
+                        <label>Clock Type:</label>
+                        <div class="clock-type-toggle">
+                            <button id="digitalBtnSettings" class="toggle-btn active">Digital</button>
+                            <button id="analogBtnSettings" class="toggle-btn">Analog</button>
+                        </div>
+                    </div>
+
+                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
+
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📅 Events</h3>
+
+                    <div class="form-group">
+                        <button id="addEventBtnSettings" class="btn-primary" style="width: 100%;">➕ Add New Event</button>
+                    </div>
+
+                    <div class="form-group">
+                        <div id="eventsListSettings" class="events-list-settings">
+                            <p class="no-events">No events scheduled yet!</p>
+                        </div>
+                    </div>
+
+                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
+
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🎨 Background Colors</h3>
+
+                    <div class="form-group">
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                            Configure background colors for different times of day. Colors will transition smoothly.
+                        </p>
+                        <div id="timeColorsList"></div>
+                        <button id="addTimeColorBtn" class="btn-secondary" style="width: 100%; margin-top: 10px;">+ Add Time Period</button>
+                    </div>
+
+                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
+
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🎙️ Text-to-Speech</h3>
+
                     <div class="form-group">
                         <label>
                             <input type="checkbox" id="enableTTS" checked>

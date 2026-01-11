@@ -6,24 +6,36 @@ class KidsClockApp {
         this.currentEventId = null;
         this.editingEventId = null;
         this.checkInterval = null;
+        this.backgroundInterval = null;
         this.settings = {
             enableTTS: true,
             ttsVoice: '',
             ttsRate: 1,
             ttsPitch: 1,
-            enable24Hour: false
+            enable24Hour: false,
+            clockType: 'digital'
         };
+        this.timeColors = [
+            { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
+            { time: '09:00', color1: '#87CEEB', color2: '#4FC3F7', name: 'Morning' },
+            { time: '12:00', color1: '#FFD700', color2: '#FFA500', name: 'Noon' },
+            { time: '17:00', color1: '#FF6B6B', color2: '#EE5A6F', name: 'Evening' },
+            { time: '20:00', color1: '#667eea', color2: '#764ba2', name: 'Night' }
+        ];
         this.init();
     }
 
     init() {
         this.loadEvents();
         this.loadSettings();
+        this.loadTimeColors();
         this.setupEventListeners();
         this.startClock();
         this.startEventChecker();
+        this.startBackgroundUpdater();
         this.renderEvents();
         this.loadVoices();
+        this.applySavedClockType();
     }
 
     // Clock Functions
@@ -78,17 +90,17 @@ class KidsClockApp {
 
     // Event Listeners
     setupEventListeners() {
-        // Clock type toggle
-        document.getElementById('digitalBtn').addEventListener('click', () => {
+        // Clock type toggle in settings
+        document.getElementById('digitalBtnSettings').addEventListener('click', () => {
             this.switchClockType('digital');
         });
 
-        document.getElementById('analogBtn').addEventListener('click', () => {
+        document.getElementById('analogBtnSettings').addEventListener('click', () => {
             this.switchClockType('analog');
         });
 
-        // Modal controls
-        document.getElementById('addEventBtn').addEventListener('click', () => {
+        // Add event button in settings
+        document.getElementById('addEventBtnSettings').addEventListener('click', () => {
             this.openModal();
         });
 
@@ -153,13 +165,18 @@ class KidsClockApp {
         document.getElementById('testTTS').addEventListener('click', () => {
             this.testTextToSpeech();
         });
+
+        // Time color management
+        document.getElementById('addTimeColorBtn').addEventListener('click', () => {
+            this.addTimeColorPeriod();
+        });
     }
 
     switchClockType(type) {
         const digitalClock = document.getElementById('digitalClock');
         const analogClock = document.getElementById('analogClock');
-        const digitalBtn = document.getElementById('digitalBtn');
-        const analogBtn = document.getElementById('analogBtn');
+        const digitalBtn = document.getElementById('digitalBtnSettings');
+        const analogBtn = document.getElementById('analogBtnSettings');
 
         if (type === 'digital') {
             digitalClock.classList.remove('hidden');
@@ -172,6 +189,13 @@ class KidsClockApp {
             digitalBtn.classList.remove('active');
             analogBtn.classList.add('active');
         }
+
+        this.settings.clockType = type;
+        this.saveSettings();
+    }
+
+    applySavedClockType() {
+        this.switchClockType(this.settings.clockType);
     }
 
     // Modal Functions
@@ -192,6 +216,7 @@ class KidsClockApp {
                 // Load type-specific data
                 if (event.type === 'announcement') {
                     document.getElementById('announcementText').value = event.message || '';
+                    document.getElementById('eventVoice').value = event.voice || '';
                 } else if (event.type === 'picture') {
                     document.getElementById('pictureUrl').value = event.pictureUrl || '';
                 } else if (event.type === 'audio') {
@@ -204,6 +229,9 @@ class KidsClockApp {
             modalTitle.textContent = 'Create New Event';
             this.resetForm();
         }
+
+        // Populate event voice selector
+        this.loadEventVoiceSelector();
 
         modal.classList.remove('hidden');
     }
@@ -219,6 +247,7 @@ class KidsClockApp {
         document.getElementById('eventTime').value = '';
         document.getElementById('eventName').value = '';
         document.getElementById('announcementText').value = '';
+        document.getElementById('eventVoice').value = '';
         document.getElementById('pictureUrl').value = '';
         document.getElementById('audioUrl').value = '';
         document.getElementById('pictureUpload').value = '';
@@ -304,6 +333,7 @@ class KidsClockApp {
         switch(type) {
             case 'announcement':
                 event.message = document.getElementById('announcementText').value;
+                event.voice = document.getElementById('eventVoice').value;
                 delete event.pictureUrl;
                 delete event.audioUrl;
                 break;
@@ -347,7 +377,7 @@ class KidsClockApp {
     }
 
     renderEvents() {
-        const eventsList = document.getElementById('eventsList');
+        const eventsList = document.getElementById('eventsListSettings');
 
         if (this.events.length === 0) {
             eventsList.innerHTML = '<p class="no-events">No events scheduled yet!</p>';
@@ -459,7 +489,7 @@ class KidsClockApp {
                 `;
                 // Speak the announcement using text-to-speech
                 if (this.settings.enableTTS && event.message) {
-                    this.speak(event.message);
+                    this.speak(event.message, event.voice);
                 }
                 break;
             case 'picture':
@@ -505,7 +535,7 @@ class KidsClockApp {
     }
 
     // Text-to-Speech Functions
-    speak(text) {
+    speak(text, eventVoice = null) {
         if (!window.speechSynthesis) {
             console.log('Text-to-speech not supported');
             return;
@@ -518,10 +548,13 @@ class KidsClockApp {
         utterance.rate = this.settings.ttsRate;
         utterance.pitch = this.settings.ttsPitch;
 
+        // Use event-specific voice if provided, otherwise use default
+        const voiceToUse = eventVoice || this.settings.ttsVoice;
+
         // Set voice if specified
-        if (this.settings.ttsVoice) {
+        if (voiceToUse) {
             const voices = window.speechSynthesis.getVoices();
-            const voice = voices.find(v => v.name === this.settings.ttsVoice);
+            const voice = voices.find(v => v.name === voiceToUse);
             if (voice) {
                 utterance.voice = voice;
             }
@@ -589,6 +622,23 @@ class KidsClockApp {
         }
     }
 
+    loadEventVoiceSelector() {
+        if (!window.speechSynthesis) return;
+
+        const voices = window.speechSynthesis.getVoices();
+        const voiceSelect = document.getElementById('eventVoice');
+
+        if (voices.length > 0) {
+            voiceSelect.innerHTML = '<option value="">Use Default Voice</option>';
+            voices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.name;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+        }
+    }
+
     // Settings Functions
     openSettings() {
         document.getElementById('settingsPanel').classList.remove('hidden');
@@ -602,6 +652,12 @@ class KidsClockApp {
 
         document.getElementById('ttsRateValue').textContent = this.settings.ttsRate + 'x';
         document.getElementById('ttsPitchValue').textContent = this.settings.ttsPitch + 'x';
+
+        // Render time colors
+        this.renderTimeColors();
+
+        // Render events in settings
+        this.renderEvents();
     }
 
     closeSettings() {
@@ -648,6 +704,209 @@ class KidsClockApp {
                 console.error('Error loading events:', e);
                 this.events = [];
             }
+        }
+    }
+
+    // Time-based Background Color Functions
+    loadTimeColors() {
+        const stored = localStorage.getItem('kidsClockTimeColors');
+        if (stored) {
+            try {
+                this.timeColors = JSON.parse(stored);
+            } catch (e) {
+                console.error('Error loading time colors:', e);
+            }
+        }
+    }
+
+    saveTimeColors() {
+        localStorage.setItem('kidsClockTimeColors', JSON.stringify(this.timeColors));
+    }
+
+    renderTimeColors() {
+        const container = document.getElementById('timeColorsList');
+
+        if (this.timeColors.length === 0) {
+            container.innerHTML = '<p style="color: #999; font-style: italic;">No time periods configured. Add one to get started!</p>';
+            return;
+        }
+
+        container.innerHTML = this.timeColors.map((tc, index) => `
+            <div class="time-color-item">
+                <div class="time-color-row">
+                    <input type="time" value="${tc.time}" onchange="app.updateTimeColor(${index}, 'time', this.value)">
+                    <input type="text" placeholder="Name" value="${tc.name || ''}" onchange="app.updateTimeColor(${index}, 'name', this.value)" style="flex: 1; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
+                    <button onclick="app.removeTimeColor(${index})">✖️</button>
+                </div>
+                <div class="time-color-row">
+                    <label style="flex: 1;">Color 1:</label>
+                    <input type="color" value="${tc.color1}" onchange="app.updateTimeColor(${index}, 'color1', this.value)">
+                    <label style="flex: 1; margin-left: 10px;">Color 2:</label>
+                    <input type="color" value="${tc.color2}" onchange="app.updateTimeColor(${index}, 'color2', this.value)">
+                </div>
+                <div class="color-preview" style="background: linear-gradient(135deg, ${tc.color1}, ${tc.color2});"></div>
+            </div>
+        `).join('');
+    }
+
+    addTimeColorPeriod() {
+        this.timeColors.push({
+            time: '12:00',
+            color1: '#667eea',
+            color2: '#764ba2',
+            name: 'New Period'
+        });
+        this.saveTimeColors();
+        this.renderTimeColors();
+    }
+
+    updateTimeColor(index, field, value) {
+        if (this.timeColors[index]) {
+            this.timeColors[index][field] = value;
+            this.saveTimeColors();
+            this.renderTimeColors();
+            this.updateBackground();
+        }
+    }
+
+    removeTimeColor(index) {
+        if (confirm('Remove this time period?')) {
+            this.timeColors.splice(index, 1);
+            this.saveTimeColors();
+            this.renderTimeColors();
+            this.updateBackground();
+        }
+    }
+
+    startBackgroundUpdater() {
+        // Update immediately
+        this.updateBackground();
+
+        // Update every minute
+        this.backgroundInterval = setInterval(() => {
+            this.updateBackground();
+        }, 60000);
+    }
+
+    updateBackground() {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        // Sort time colors by time
+        const sorted = [...this.timeColors].sort((a, b) => {
+            const aMinutes = parseInt(a.time.split(':')[0]) * 60 + parseInt(a.time.split(':')[1]);
+            const bMinutes = parseInt(b.time.split(':')[0]) * 60 + parseInt(b.time.split(':')[1]);
+            return aMinutes - bMinutes;
+        });
+
+        // Find current and next time periods
+        let currentPeriod = sorted[sorted.length - 1]; // Default to last period
+        let nextPeriod = sorted[0]; // Default to first period (next day)
+
+        for (let i = 0; i < sorted.length; i++) {
+            const periodMinutes = parseInt(sorted[i].time.split(':')[0]) * 60 + parseInt(sorted[i].time.split(':')[1]);
+
+            if (periodMinutes <= currentMinutes) {
+                currentPeriod = sorted[i];
+                nextPeriod = sorted[i + 1] || sorted[0];
+            }
+        }
+
+        // Calculate transition progress
+        const currentMinutes_ = parseInt(currentPeriod.time.split(':')[0]) * 60 + parseInt(currentPeriod.time.split(':')[1]);
+        let nextMinutes = parseInt(nextPeriod.time.split(':')[0]) * 60 + parseInt(nextPeriod.time.split(':')[1]);
+
+        // Handle wrapping to next day
+        if (nextMinutes <= currentMinutes_) {
+            nextMinutes += 24 * 60;
+        }
+
+        const totalDuration = nextMinutes - currentMinutes_;
+        const elapsed = currentMinutes - currentMinutes_;
+        const progress = Math.max(0, Math.min(1, elapsed / totalDuration));
+
+        // Interpolate colors
+        const color1 = this.interpolateColor(currentPeriod.color1, nextPeriod.color1, progress);
+        const color2 = this.interpolateColor(currentPeriod.color2, nextPeriod.color2, progress);
+
+        // Apply background
+        document.body.style.background = `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
+
+        // Update clock colors to match
+        this.updateClockColors(color1, color2);
+    }
+
+    interpolateColor(color1, color2, progress) {
+        // Convert hex to RGB
+        const hex2rgb = (hex) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return [r, g, b];
+        };
+
+        const rgb2hex = (r, g, b) => {
+            return '#' + [r, g, b].map(x => {
+                const hex = Math.round(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        };
+
+        const c1 = hex2rgb(color1);
+        const c2 = hex2rgb(color2);
+
+        const r = c1[0] + (c2[0] - c1[0]) * progress;
+        const g = c1[1] + (c2[1] - c1[1]) * progress;
+        const b = c1[2] + (c2[2] - c1[2]) * progress;
+
+        return rgb2hex(r, g, b);
+    }
+
+    updateClockColors(bgColor1, bgColor2) {
+        // Calculate average brightness of background
+        const hex2rgb = (hex) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return [r, g, b];
+        };
+
+        const rgb1 = hex2rgb(bgColor1);
+        const rgb2 = hex2rgb(bgColor2);
+        const avgR = (rgb1[0] + rgb2[0]) / 2;
+        const avgG = (rgb1[1] + rgb2[1]) / 2;
+        const avgB = (rgb1[2] + rgb2[2]) / 2;
+
+        // Calculate relative luminance
+        const luminance = (0.299 * avgR + 0.587 * avgG + 0.114 * avgB) / 255;
+
+        // Use white for dark backgrounds, slightly lighter version for light backgrounds
+        let clockColor;
+        if (luminance > 0.5) {
+            // Light background - use a subtle darker shade
+            clockColor = `rgba(${avgR * 0.7}, ${avgG * 0.7}, ${avgB * 0.7}, 0.8)`;
+        } else {
+            // Dark background - use white with some transparency
+            clockColor = 'rgba(255, 255, 255, 0.9)';
+        }
+
+        // Apply to digital clock
+        const timeDisplay = document.querySelector('.time-display');
+        const dateDisplay = document.querySelector('.date-display');
+        if (timeDisplay) timeDisplay.style.color = clockColor;
+        if (dateDisplay) dateDisplay.style.color = clockColor;
+
+        // Apply to header
+        const header = document.querySelector('header');
+        if (header) {
+            header.style.background = `linear-gradient(135deg, ${bgColor1}, ${bgColor2})`;
+        }
+
+        // Apply to clock container
+        const clockContainer = document.querySelector('.clock-container');
+        if (clockContainer) {
+            clockContainer.style.background = `rgba(255, 255, 255, ${luminance > 0.6 ? 0.3 : 0.1})`;
+            clockContainer.style.backdropFilter = 'blur(10px)';
         }
     }
 }
