@@ -877,7 +877,7 @@ class KidsClockApp {
         container.innerHTML = this.timeColors.map((tc, index) => `
             <div class="time-color-item">
                 <div class="time-color-row">
-                    <input type="time" value="${tc.time}" onchange="app.updateTimeColor(${index}, 'time', this.value)">
+                    <input type="time" value="${tc.time}" onchange="app.updateTimeColor(${index}, 'time', this.value)" title="Time (24h format)">
                     <input type="text" placeholder="Name" value="${tc.name || ''}" onchange="app.updateTimeColor(${index}, 'name', this.value)" style="flex: 1; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
                     <button onclick="app.removeTimeColor(${index})">✖️</button>
                 </div>
