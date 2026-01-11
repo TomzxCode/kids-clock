@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A fun and colorful clock app for children with event scheduling">
+    <meta name="theme-color" content="#FFB6C1">
+    <title>Kids Clock</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🕐</text></svg>">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <h1>🕐 Kids Clock 🕐</h1>
+            <div class="header-controls">
+                <button id="settingsBtn" class="icon-btn" aria-label="Settings">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Main Clock Display -->
+        <main id="mainView">
+            <div class="clock-container">
+                <div class="clock-type-toggle">
+                    <button id="digitalBtn" class="toggle-btn active">Digital</button>
+                    <button id="analogBtn" class="toggle-btn">Analog</button>
+                </div>
+
+                <!-- Digital Clock -->
+                <div id="digitalClock" class="clock-display">
+                    <div class="time-display">
+                        <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+                    </div>
+                    <div class="date-display" id="dateDisplay"></div>
+                </div>
+
+                <!-- Analog Clock -->
+                <div id="analogClock" class="clock-display hidden">
+                    <svg viewBox="0 0 200 200" class="analog-clock-svg">
+                        <!-- Clock face -->
+                        <circle cx="100" cy="100" r="95" fill="#fff" stroke="#333" stroke-width="3"/>
+
+                        <!-- Hour markers -->
+                        <g class="hour-markers">
+                            <line x1="100" y1="10" x2="100" y2="20" stroke="#333" stroke-width="3"/>
+                            <line x1="100" y1="180" x2="100" y2="190" stroke="#333" stroke-width="3"/>
+                            <line x1="10" y1="100" x2="20" y2="100" stroke="#333" stroke-width="3"/>
+                            <line x1="180" y1="100" x2="190" y2="100" stroke="#333" stroke-width="3"/>
+                        </g>
+
+                        <!-- Numbers -->
+                        <text x="100" y="30" text-anchor="middle" font-size="20" font-weight="bold">12</text>
+                        <text x="170" y="107" text-anchor="middle" font-size="20" font-weight="bold">3</text>
+                        <text x="100" y="185" text-anchor="middle" font-size="20" font-weight="bold">6</text>
+                        <text x="30" y="107" text-anchor="middle" font-size="20" font-weight="bold">9</text>
+
+                        <!-- Hour hand -->
+                        <line id="hourHand" x1="100" y1="100" x2="100" y2="50" stroke="#333" stroke-width="6" stroke-linecap="round"/>
+
+                        <!-- Minute hand -->
+                        <line id="minuteHand" x1="100" y1="100" x2="100" y2="35" stroke="#666" stroke-width="4" stroke-linecap="round"/>
+
+                        <!-- Second hand -->
+                        <line id="secondHand" x1="100" y1="100" x2="100" y2="30" stroke="#ff6b6b" stroke-width="2" stroke-linecap="round"/>
+
+                        <!-- Center dot -->
+                        <circle cx="100" cy="100" r="5" fill="#333"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="upcoming-events">
+                <h2>📅 Upcoming Events</h2>
+                <div id="eventsList" class="events-list">
+                    <p class="no-events">No events scheduled yet!</p>
+                </div>
+            </div>
+
+            <!-- Add Event Button -->
+            <button id="addEventBtn" class="add-event-btn">➕ Add New Event</button>
+        </main>
+
+        <!-- Event Modal -->
+        <div id="eventModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Create New Event</h2>
+                    <button class="close-btn" id="closeModal">✖️</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="eventType">Event Type:</label>
+                        <select id="eventType" class="input-field">
+                            <option value="announcement">📢 Announcement</option>
+                            <option value="picture">🖼️ Picture</option>
+                            <option value="audio">🎵 Audio</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventTime">Time:</label>
+                        <input type="time" id="eventTime" class="input-field" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="eventName">Event Name:</label>
+                        <input type="text" id="eventName" class="input-field" placeholder="e.g., Snack Time!" required>
+                    </div>
+
+                    <!-- Announcement specific -->
+                    <div id="announcementFields" class="event-specific-fields">
+                        <div class="form-group">
+                            <label for="announcementText">Announcement Message:</label>
+                            <textarea id="announcementText" class="input-field" rows="3" placeholder="Time to wash your hands!"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Picture specific -->
+                    <div id="pictureFields" class="event-specific-fields hidden">
+                        <div class="form-group">
+                            <label for="pictureUrl">Picture URL or upload:</label>
+                            <input type="file" id="pictureUpload" class="input-field" accept="image/*">
+                            <input type="text" id="pictureUrl" class="input-field" placeholder="Or paste image URL">
+                        </div>
+                    </div>
+
+                    <!-- Audio specific -->
+                    <div id="audioFields" class="event-specific-fields hidden">
+                        <div class="form-group">
+                            <label for="audioUrl">Audio URL or upload:</label>
+                            <input type="file" id="audioUpload" class="input-field" accept="audio/*">
+                            <input type="text" id="audioUrl" class="input-field" placeholder="Or paste audio URL">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="repeatDaily">
+                            Repeat daily
+                        </label>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="saveEventBtn" class="btn-primary">Save Event</button>
+                        <button id="cancelEventBtn" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Display Overlay -->
+        <div id="eventOverlay" class="event-overlay hidden">
+            <div class="event-overlay-content">
+                <button class="close-overlay-btn" id="closeOverlay">✖️</button>
+                <div id="overlayContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
