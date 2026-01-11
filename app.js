@@ -13,11 +13,13 @@ class KidsClockApp {
             ttsRate: 1,
             ttsPitch: 1,
             enable24Hour: false,
-            clockType: 'digital',
+            showDigitalClock: true,
+            showAnalogClock: false,
             enableHourlyAnnouncement: false,
             hourlyAnnouncementStart: '08:00',
             hourlyAnnouncementEnd: '22:00',
-            showSeconds: true
+            showSeconds: true,
+            showAnalogSeconds: true
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -105,19 +107,24 @@ class KidsClockApp {
             minuteHand.setAttribute('transform', `rotate(${minuteAngle} 100 100)`);
         }
         if (secondHand) {
-            secondHand.setAttribute('transform', `rotate(${secondAngle} 100 100)`);
+            if (this.settings.showAnalogSeconds) {
+                secondHand.style.display = 'block';
+                secondHand.setAttribute('transform', `rotate(${secondAngle} 100 100)`);
+            } else {
+                secondHand.style.display = 'none';
+            }
         }
     }
 
     // Event Listeners
     setupEventListeners() {
-        // Clock type toggle in settings
-        document.getElementById('digitalBtnSettings').addEventListener('click', () => {
-            this.switchClockType('digital');
+        // Clock visibility checkboxes in settings
+        document.getElementById('showDigitalClock').addEventListener('change', (e) => {
+            this.updateClockVisibility();
         });
 
-        document.getElementById('analogBtnSettings').addEventListener('click', () => {
-            this.switchClockType('analog');
+        document.getElementById('showAnalogClock').addEventListener('change', (e) => {
+            this.updateClockVisibility();
         });
 
         // Add event button in settings
@@ -193,30 +200,30 @@ class KidsClockApp {
         });
     }
 
-    switchClockType(type) {
+    updateClockVisibility() {
         const digitalClock = document.getElementById('digitalClock');
         const analogClock = document.getElementById('analogClock');
-        const digitalBtn = document.getElementById('digitalBtnSettings');
-        const analogBtn = document.getElementById('analogBtnSettings');
+        const showDigital = document.getElementById('showDigitalClock').checked;
+        const showAnalog = document.getElementById('showAnalogClock').checked;
 
-        if (type === 'digital') {
+        if (showDigital) {
             digitalClock.classList.remove('hidden');
-            analogClock.classList.add('hidden');
-            digitalBtn.classList.add('active');
-            analogBtn.classList.remove('active');
         } else {
             digitalClock.classList.add('hidden');
-            analogClock.classList.remove('hidden');
-            digitalBtn.classList.remove('active');
-            analogBtn.classList.add('active');
         }
 
-        this.settings.clockType = type;
-        this.saveSettings();
+        if (showAnalog) {
+            analogClock.classList.remove('hidden');
+        } else {
+            analogClock.classList.add('hidden');
+        }
     }
 
     applySavedClockType() {
-        this.switchClockType(this.settings.clockType);
+        // Apply saved clock visibility settings
+        document.getElementById('showDigitalClock').checked = this.settings.showDigitalClock;
+        document.getElementById('showAnalogClock').checked = this.settings.showAnalogClock;
+        this.updateClockVisibility();
     }
 
     // Modal Functions
@@ -784,7 +791,10 @@ class KidsClockApp {
         document.getElementById('ttsRate').value = this.settings.ttsRate;
         document.getElementById('ttsPitch').value = this.settings.ttsPitch;
         document.getElementById('enable24Hour').checked = this.settings.enable24Hour;
+        document.getElementById('showDigitalClock').checked = this.settings.showDigitalClock;
+        document.getElementById('showAnalogClock').checked = this.settings.showAnalogClock;
         document.getElementById('showSeconds').checked = this.settings.showSeconds;
+        document.getElementById('showAnalogSeconds').checked = this.settings.showAnalogSeconds;
         document.getElementById('enableHourlyAnnouncement').checked = this.settings.enableHourlyAnnouncement;
         document.getElementById('hourlyAnnouncementStart').value = this.settings.hourlyAnnouncementStart;
         document.getElementById('hourlyAnnouncementEnd').value = this.settings.hourlyAnnouncementEnd;
@@ -809,12 +819,16 @@ class KidsClockApp {
         this.settings.ttsRate = parseFloat(document.getElementById('ttsRate').value);
         this.settings.ttsPitch = parseFloat(document.getElementById('ttsPitch').value);
         this.settings.enable24Hour = document.getElementById('enable24Hour').checked;
+        this.settings.showDigitalClock = document.getElementById('showDigitalClock').checked;
+        this.settings.showAnalogClock = document.getElementById('showAnalogClock').checked;
         this.settings.showSeconds = document.getElementById('showSeconds').checked;
+        this.settings.showAnalogSeconds = document.getElementById('showAnalogSeconds').checked;
         this.settings.enableHourlyAnnouncement = document.getElementById('enableHourlyAnnouncement').checked;
         this.settings.hourlyAnnouncementStart = document.getElementById('hourlyAnnouncementStart').value;
         this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
 
         this.saveSettings();
+        this.updateClockVisibility();
         this.closeSettings();
     }
 
@@ -826,7 +840,18 @@ class KidsClockApp {
         const stored = localStorage.getItem('kidsClockSettings');
         if (stored) {
             try {
-                this.settings = { ...this.settings, ...JSON.parse(stored) };
+                const loadedSettings = JSON.parse(stored);
+
+                // Migrate old clockType setting to new format
+                if (loadedSettings.clockType !== undefined &&
+                    loadedSettings.showDigitalClock === undefined &&
+                    loadedSettings.showAnalogClock === undefined) {
+                    loadedSettings.showDigitalClock = (loadedSettings.clockType === 'digital');
+                    loadedSettings.showAnalogClock = (loadedSettings.clockType === 'analog');
+                    delete loadedSettings.clockType;
+                }
+
+                this.settings = { ...this.settings, ...loadedSettings };
             } catch (e) {
                 console.error('Error loading settings:', e);
             }

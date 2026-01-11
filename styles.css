@@ -78,8 +78,15 @@ body {
     animation: fadeIn 0.8s ease;
     width: 100%;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
+    gap: 40px;
+}
+
+.clock-display {
+    flex: 1 1 auto;
+    min-width: 300px;
 }
 
 .clock-type-toggle {
