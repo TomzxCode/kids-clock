@@ -16,7 +16,8 @@ class KidsClockApp {
             clockType: 'digital',
             enableHourlyAnnouncement: false,
             hourlyAnnouncementStart: '08:00',
-            hourlyAnnouncementEnd: '22:00'
+            hourlyAnnouncementEnd: '22:00',
+            showSeconds: true
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -57,7 +58,24 @@ class KidsClockApp {
 
         document.getElementById('hours').textContent = hours;
         document.getElementById('minutes').textContent = minutes;
-        document.getElementById('seconds').textContent = seconds;
+
+        const secondsElement = document.getElementById('seconds');
+        if (this.settings.showSeconds) {
+            secondsElement.textContent = seconds;
+            secondsElement.style.display = 'inline';
+            // Show the colon before seconds
+            const prevSibling = secondsElement.previousSibling;
+            if (prevSibling && prevSibling.nodeType === Node.TEXT_NODE) {
+                prevSibling.textContent = ':';
+            }
+        } else {
+            secondsElement.style.display = 'none';
+            // Hide the colon before seconds
+            const prevSibling = secondsElement.previousSibling;
+            if (prevSibling && prevSibling.nodeType === Node.TEXT_NODE) {
+                prevSibling.textContent = '';
+            }
+        }
 
         // Update date
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -766,6 +784,7 @@ class KidsClockApp {
         document.getElementById('ttsRate').value = this.settings.ttsRate;
         document.getElementById('ttsPitch').value = this.settings.ttsPitch;
         document.getElementById('enable24Hour').checked = this.settings.enable24Hour;
+        document.getElementById('showSeconds').checked = this.settings.showSeconds;
         document.getElementById('enableHourlyAnnouncement').checked = this.settings.enableHourlyAnnouncement;
         document.getElementById('hourlyAnnouncementStart').value = this.settings.hourlyAnnouncementStart;
         document.getElementById('hourlyAnnouncementEnd').value = this.settings.hourlyAnnouncementEnd;
@@ -790,6 +809,7 @@ class KidsClockApp {
         this.settings.ttsRate = parseFloat(document.getElementById('ttsRate').value);
         this.settings.ttsPitch = parseFloat(document.getElementById('ttsPitch').value);
         this.settings.enable24Hour = document.getElementById('enable24Hour').checked;
+        this.settings.showSeconds = document.getElementById('showSeconds').checked;
         this.settings.enableHourlyAnnouncement = document.getElementById('enableHourlyAnnouncement').checked;
         this.settings.hourlyAnnouncementStart = document.getElementById('hourlyAnnouncementStart').value;
         this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
