@@ -207,6 +207,8 @@ class KidsClockApp {
         const modal = document.getElementById('eventModal');
         const modalTitle = document.getElementById('modalTitle');
 
+        let selectedVoice = '';
+
         if (eventId) {
             modalTitle.textContent = 'Edit Event';
             const event = this.events.find(e => e.id === eventId);
@@ -219,7 +221,7 @@ class KidsClockApp {
                 // Load type-specific data
                 if (event.type === 'announcement') {
                     document.getElementById('announcementText').value = event.message || '';
-                    document.getElementById('eventVoice').value = event.voice || '';
+                    selectedVoice = event.voice || '';
                 } else if (event.type === 'picture') {
                     document.getElementById('pictureUrl').value = event.pictureUrl || '';
                 } else if (event.type === 'audio') {
@@ -233,8 +235,8 @@ class KidsClockApp {
             this.resetForm();
         }
 
-        // Populate event voice selector
-        this.loadEventVoiceSelector();
+        // Populate event voice selector with the saved voice if editing
+        this.loadEventVoiceSelector(selectedVoice);
 
         modal.classList.remove('hidden');
     }
@@ -560,7 +562,12 @@ class KidsClockApp {
             const voice = voices.find(v => v.name === voiceToUse);
             if (voice) {
                 utterance.voice = voice;
+                console.log('Using voice:', voice.name);
+            } else {
+                console.log('Voice not found:', voiceToUse);
             }
+        } else {
+            console.log('Using default system voice');
         }
 
         window.speechSynthesis.speak(utterance);
@@ -625,20 +632,37 @@ class KidsClockApp {
         }
     }
 
-    loadEventVoiceSelector() {
+    loadEventVoiceSelector(selectedVoice = '') {
         if (!window.speechSynthesis) return;
 
-        const voices = window.speechSynthesis.getVoices();
-        const voiceSelect = document.getElementById('eventVoice');
+        const populateEventVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById('eventVoice');
 
-        if (voices.length > 0) {
-            voiceSelect.innerHTML = '<option value="">Use Default Voice</option>';
-            voices.forEach(voice => {
-                const option = document.createElement('option');
-                option.value = voice.name;
-                option.textContent = `${voice.name} (${voice.lang})`;
-                voiceSelect.appendChild(option);
-            });
+            if (voices.length > 0) {
+                voiceSelect.innerHTML = '<option value="">Use Default Voice</option>';
+                voices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.name;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    voiceSelect.appendChild(option);
+                });
+
+                // Set the selected voice if provided
+                if (selectedVoice) {
+                    voiceSelect.value = selectedVoice;
+                }
+            }
+        };
+
+        // Populate immediately
+        populateEventVoices();
+
+        // Also handle async loading of voices
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                populateEventVoices();
+            };
         }
     }
 
