@@ -556,21 +556,44 @@ class KidsClockApp {
         // Use event-specific voice if provided, otherwise use default
         const voiceToUse = eventVoice || this.settings.ttsVoice;
 
-        // Set voice if specified
-        if (voiceToUse) {
-            const voices = window.speechSynthesis.getVoices();
-            const voice = voices.find(v => v.name === voiceToUse);
-            if (voice) {
-                utterance.voice = voice;
-                console.log('Using voice:', voice.name);
-            } else {
-                console.log('Voice not found:', voiceToUse);
-            }
-        } else {
-            console.log('Using default system voice');
-        }
+        // Function to set voice and speak
+        const setVoiceAndSpeak = () => {
+            if (voiceToUse) {
+                const voices = window.speechSynthesis.getVoices();
+                console.log('Available voices:', voices.length);
+                console.log('Looking for voice:', voiceToUse);
 
-        window.speechSynthesis.speak(utterance);
+                const voice = voices.find(v => v.name === voiceToUse);
+                if (voice) {
+                    utterance.voice = voice;
+                    console.log('Using voice:', voice.name, voice.lang);
+                } else {
+                    console.log('Voice not found:', voiceToUse);
+                    console.log('Available voice names:', voices.map(v => v.name));
+                }
+            } else {
+                console.log('Using default system voice');
+            }
+
+            window.speechSynthesis.speak(utterance);
+        };
+
+        // Get voices and speak
+        const voices = window.speechSynthesis.getVoices();
+
+        if (voices.length > 0) {
+            // Voices already loaded
+            setVoiceAndSpeak();
+        } else {
+            // Wait for voices to load
+            window.speechSynthesis.onvoiceschanged = () => {
+                setVoiceAndSpeak();
+                window.speechSynthesis.onvoiceschanged = null; // Clean up
+            };
+
+            // Also try after a short delay as a fallback
+            setTimeout(setVoiceAndSpeak, 100);
+        }
     }
 
     testTextToSpeech() {
