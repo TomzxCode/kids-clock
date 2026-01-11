@@ -87,7 +87,7 @@
         <div id="eventModal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Create New Event</h2>
+                    <h2 id="modalTitle">Create New Event</h2>
                     <button class="close-btn" id="closeModal">✖️</button>
                 </div>
                 <div class="modal-body">
@@ -156,6 +156,61 @@
             <div class="event-overlay-content">
                 <button class="close-overlay-btn" id="closeOverlay">✖️</button>
                 <div id="overlayContent"></div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ Settings</h2>
+                    <button class="close-btn" id="closeSettings">✖️</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enableTTS" checked>
+                            Enable Text-to-Speech for announcements
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ttsVoice">Voice:</label>
+                        <select id="ttsVoice" class="input-field">
+                            <option value="">Default Voice</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ttsRate">Speech Rate:</label>
+                        <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1" class="slider">
+                        <span id="ttsRateValue">1x</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ttsPitch">Speech Pitch:</label>
+                        <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1" class="slider">
+                        <span id="ttsPitchValue">1x</span>
+                    </div>
+
+                    <div class="form-group">
+                        <button id="testTTS" class="btn-primary">Test Voice</button>
+                    </div>
+
+                    <hr style="margin: 30px 0; border: 1px solid #ddd;">
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enable24Hour">
+                            Use 24-hour time format
+                        </label>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="saveSettings" class="btn-primary">Save Settings</button>
+                        <button id="cancelSettings" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

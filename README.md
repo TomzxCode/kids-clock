@@ -15,6 +15,7 @@ Create three types of events that trigger at specific times:
 1. **📢 Announcements**
    - Display text messages at scheduled times
    - Perfect for reminders like "Time to brush teeth!" or "Snack time!"
+   - **Text-to-Speech**: Announcements are read aloud automatically!
 
 2. **🖼️ Picture Events**
    - Show images at specific times
@@ -26,12 +27,29 @@ Create three types of events that trigger at specific times:
    - Upload audio or use URLs
    - Ideal for songs, alarms, or voice reminders
 
-### ⚙️ Event Configuration
-- Set specific times for events (HH:MM format)
-- Name your events for easy identification
-- Option to repeat events daily
-- Delete events when no longer needed
+### ⚙️ Event Management
+- **Create**: Add new events with specific times (HH:MM format)
+- **Edit**: Modify existing events anytime using the edit button (✏️)
+- **Delete**: Remove events when no longer needed using the delete button (🗑️)
+- **Repeat**: Option to repeat events daily
 - Events persist in browser storage
+
+### 🎙️ Text-to-Speech
+- Announcements are automatically read aloud when they trigger
+- Customizable voice settings:
+  - Choose from available system voices
+  - Adjust speech rate (0.5x - 2x)
+  - Adjust pitch (0.5x - 2x)
+- Test your voice settings before saving
+- Can be enabled/disabled in settings
+
+### ⚙️ Settings Panel
+Access via the gear icon (⚙️) in the header:
+- Enable/disable text-to-speech
+- Select voice and language
+- Adjust speech rate and pitch
+- 24-hour time format option (coming soon)
+- Settings are saved automatically
 
 ### 🌈 Child-Friendly Design
 - Bright, colorful gradients
@@ -105,16 +123,33 @@ Then open `http://localhost:8000` in your browser.
 
 - All your events appear in the **"Upcoming Events"** section
 - Events are sorted by time
+- Click the ✏️ button to edit an event
+  - Modify the time, name, message, or any other details
+  - Change event type if needed
+  - Update repeat settings
 - Click the 🗑️ button to delete an event
 - One-time events automatically disable after triggering
 - Daily events repeat every day at the scheduled time
+
+### Adjusting Settings
+
+1. Click the ⚙️ gear icon in the header
+2. Configure your preferences:
+   - **Text-to-Speech**: Toggle on/off and customize voice settings
+   - **Voice Selection**: Choose from available system voices
+   - **Speech Rate**: Control how fast announcements are spoken
+   - **Speech Pitch**: Adjust voice pitch
+3. Click **"Test Voice"** to hear a sample
+4. Click **"Save Settings"** to apply changes
 
 ### When Events Trigger
 
 - A notification sound plays when an event triggers
 - A full-screen overlay shows the event content
+- **Announcements** are read aloud using text-to-speech (if enabled)
 - Click the ✖️ button to close the overlay
 - Audio events start playing automatically
+- Picture events display in full size
 
 ## 💾 Data Storage
 
@@ -160,10 +195,22 @@ The app uses CSS variables and is easy to customize:
 - Check that the time is set correctly
 - Verify the event is enabled (not disabled after one-time use)
 
+**Text-to-speech not working:**
+- Check that TTS is enabled in Settings (⚙️)
+- Ensure your browser supports Web Speech API (Chrome, Edge, Safari, Firefox)
+- Make sure your device volume is turned up
+- Try selecting a different voice in settings
+- Some browsers require user interaction before allowing speech
+
 **Images/Audio not loading:**
 - Check that the URL is accessible
 - For uploaded files, they're stored as base64 data
 - Large files may take time to load
+
+**Edit button not working:**
+- Refresh the page if events don't load in edit mode
+- Check browser console for errors
+- Clear localStorage and recreate events if needed
 
 **PWA not installing:**
 - Ensure you're using HTTPS (or localhost)

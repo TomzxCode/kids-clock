@@ -4,16 +4,26 @@ class KidsClockApp {
     constructor() {
         this.events = [];
         this.currentEventId = null;
+        this.editingEventId = null;
         this.checkInterval = null;
+        this.settings = {
+            enableTTS: true,
+            ttsVoice: '',
+            ttsRate: 1,
+            ttsPitch: 1,
+            enable24Hour: false
+        };
         this.init();
     }
 
     init() {
         this.loadEvents();
+        this.loadSettings();
         this.setupEventListeners();
         this.startClock();
         this.startEventChecker();
         this.renderEvents();
+        this.loadVoices();
     }
 
     // Clock Functions
@@ -113,6 +123,36 @@ class KidsClockApp {
         document.getElementById('audioUpload').addEventListener('change', (e) => {
             this.handleFileUpload(e, 'audio');
         });
+
+        // Settings controls
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            this.openSettings();
+        });
+
+        document.getElementById('closeSettings').addEventListener('click', () => {
+            this.closeSettings();
+        });
+
+        document.getElementById('saveSettings').addEventListener('click', () => {
+            this.saveSettingsData();
+        });
+
+        document.getElementById('cancelSettings').addEventListener('click', () => {
+            this.closeSettings();
+        });
+
+        // TTS controls
+        document.getElementById('ttsRate').addEventListener('input', (e) => {
+            document.getElementById('ttsRateValue').textContent = e.target.value + 'x';
+        });
+
+        document.getElementById('ttsPitch').addEventListener('input', (e) => {
+            document.getElementById('ttsPitchValue').textContent = e.target.value + 'x';
+        });
+
+        document.getElementById('testTTS').addEventListener('click', () => {
+            this.testTextToSpeech();
+        });
     }
 
     switchClockType(type) {
@@ -135,13 +175,42 @@ class KidsClockApp {
     }
 
     // Modal Functions
-    openModal() {
-        document.getElementById('eventModal').classList.remove('hidden');
-        this.resetForm();
+    openModal(eventId = null) {
+        this.editingEventId = eventId;
+        const modal = document.getElementById('eventModal');
+        const modalTitle = document.getElementById('modalTitle');
+
+        if (eventId) {
+            modalTitle.textContent = 'Edit Event';
+            const event = this.events.find(e => e.id === eventId);
+            if (event) {
+                document.getElementById('eventType').value = event.type;
+                document.getElementById('eventTime').value = event.time;
+                document.getElementById('eventName').value = event.name;
+                document.getElementById('repeatDaily').checked = event.repeatDaily;
+
+                // Load type-specific data
+                if (event.type === 'announcement') {
+                    document.getElementById('announcementText').value = event.message || '';
+                } else if (event.type === 'picture') {
+                    document.getElementById('pictureUrl').value = event.pictureUrl || '';
+                } else if (event.type === 'audio') {
+                    document.getElementById('audioUrl').value = event.audioUrl || '';
+                }
+
+                this.showEventFields(event.type);
+            }
+        } else {
+            modalTitle.textContent = 'Create New Event';
+            this.resetForm();
+        }
+
+        modal.classList.remove('hidden');
     }
 
     closeModal() {
         document.getElementById('eventModal').classList.add('hidden');
+        this.editingEventId = null;
         this.resetForm();
     }
 
@@ -207,19 +276,36 @@ class KidsClockApp {
             return;
         }
 
-        const event = {
-            id: Date.now(),
-            type,
-            time,
-            name,
-            repeatDaily,
-            enabled: true
-        };
+        let event;
+        if (this.editingEventId) {
+            // Edit existing event
+            event = this.events.find(e => e.id === this.editingEventId);
+            if (!event) return;
+
+            event.type = type;
+            event.time = time;
+            event.name = name;
+            event.repeatDaily = repeatDaily;
+            event.enabled = true; // Re-enable in case it was disabled
+        } else {
+            // Create new event
+            event = {
+                id: Date.now(),
+                type,
+                time,
+                name,
+                repeatDaily,
+                enabled: true
+            };
+            this.events.push(event);
+        }
 
         // Add type-specific data
         switch(type) {
             case 'announcement':
                 event.message = document.getElementById('announcementText').value;
+                delete event.pictureUrl;
+                delete event.audioUrl;
                 break;
             case 'picture':
                 const pictureUrl = document.getElementById('pictureUrl').value;
@@ -228,6 +314,8 @@ class KidsClockApp {
                     return;
                 }
                 event.pictureUrl = pictureUrl;
+                delete event.message;
+                delete event.audioUrl;
                 break;
             case 'audio':
                 const audioUrl = document.getElementById('audioUrl').value;
@@ -236,13 +324,18 @@ class KidsClockApp {
                     return;
                 }
                 event.audioUrl = audioUrl;
+                delete event.message;
+                delete event.pictureUrl;
                 break;
         }
 
-        this.events.push(event);
         this.saveEvents();
         this.renderEvents();
         this.closeModal();
+    }
+
+    editEvent(id) {
+        this.openModal(id);
     }
 
     deleteEvent(id) {
@@ -281,7 +374,8 @@ class KidsClockApp {
                         <div class="event-type">${event.repeatDaily ? 'Repeats daily' : 'One-time event'}</div>
                     </div>
                     <div class="event-actions">
-                        <button class="event-action-btn" onclick="app.deleteEvent(${event.id})">🗑️</button>
+                        <button class="event-action-btn" onclick="app.editEvent(${event.id})" title="Edit">✏️</button>
+                        <button class="event-action-btn" onclick="app.deleteEvent(${event.id})" title="Delete">🗑️</button>
                     </div>
                 </div>
             `;
@@ -363,6 +457,10 @@ class KidsClockApp {
                         <p>${event.message || ''}</p>
                     </div>
                 `;
+                // Speak the announcement using text-to-speech
+                if (this.settings.enableTTS && event.message) {
+                    this.speak(event.message);
+                }
                 break;
             case 'picture':
                 html = `
@@ -398,6 +496,141 @@ class KidsClockApp {
         if (audio) {
             audio.pause();
             audio.currentTime = 0;
+        }
+
+        // Stop any text-to-speech
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+    }
+
+    // Text-to-Speech Functions
+    speak(text) {
+        if (!window.speechSynthesis) {
+            console.log('Text-to-speech not supported');
+            return;
+        }
+
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = this.settings.ttsRate;
+        utterance.pitch = this.settings.ttsPitch;
+
+        // Set voice if specified
+        if (this.settings.ttsVoice) {
+            const voices = window.speechSynthesis.getVoices();
+            const voice = voices.find(v => v.name === this.settings.ttsVoice);
+            if (voice) {
+                utterance.voice = voice;
+            }
+        }
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    testTextToSpeech() {
+        const testMessage = "Hello! This is a test of the text to speech system. Time to have fun!";
+
+        // Get current settings from UI
+        const rate = parseFloat(document.getElementById('ttsRate').value);
+        const pitch = parseFloat(document.getElementById('ttsPitch').value);
+        const voiceName = document.getElementById('ttsVoice').value;
+
+        if (!window.speechSynthesis) {
+            alert('Text-to-speech is not supported in your browser');
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(testMessage);
+        utterance.rate = rate;
+        utterance.pitch = pitch;
+
+        if (voiceName) {
+            const voices = window.speechSynthesis.getVoices();
+            const voice = voices.find(v => v.name === voiceName);
+            if (voice) {
+                utterance.voice = voice;
+            }
+        }
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    loadVoices() {
+        if (!window.speechSynthesis) return;
+
+        const populateVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById('ttsVoice');
+
+            if (voices.length > 0) {
+                voiceSelect.innerHTML = '<option value="">Default Voice</option>';
+                voices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.name;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    voiceSelect.appendChild(option);
+                });
+
+                // Set saved voice
+                if (this.settings.ttsVoice) {
+                    voiceSelect.value = this.settings.ttsVoice;
+                }
+            }
+        };
+
+        populateVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = populateVoices;
+        }
+    }
+
+    // Settings Functions
+    openSettings() {
+        document.getElementById('settingsPanel').classList.remove('hidden');
+
+        // Load current settings into UI
+        document.getElementById('enableTTS').checked = this.settings.enableTTS;
+        document.getElementById('ttsVoice').value = this.settings.ttsVoice;
+        document.getElementById('ttsRate').value = this.settings.ttsRate;
+        document.getElementById('ttsPitch').value = this.settings.ttsPitch;
+        document.getElementById('enable24Hour').checked = this.settings.enable24Hour;
+
+        document.getElementById('ttsRateValue').textContent = this.settings.ttsRate + 'x';
+        document.getElementById('ttsPitchValue').textContent = this.settings.ttsPitch + 'x';
+    }
+
+    closeSettings() {
+        document.getElementById('settingsPanel').classList.add('hidden');
+    }
+
+    saveSettingsData() {
+        this.settings.enableTTS = document.getElementById('enableTTS').checked;
+        this.settings.ttsVoice = document.getElementById('ttsVoice').value;
+        this.settings.ttsRate = parseFloat(document.getElementById('ttsRate').value);
+        this.settings.ttsPitch = parseFloat(document.getElementById('ttsPitch').value);
+        this.settings.enable24Hour = document.getElementById('enable24Hour').checked;
+
+        this.saveSettings();
+        this.closeSettings();
+    }
+
+    saveSettings() {
+        localStorage.setItem('kidsClockSettings', JSON.stringify(this.settings));
+    }
+
+    loadSettings() {
+        const stored = localStorage.getItem('kidsClockSettings');
+        if (stored) {
+            try {
+                this.settings = { ...this.settings, ...JSON.parse(stored) };
+            } catch (e) {
+                console.error('Error loading settings:', e);
+            }
         }
     }
 
