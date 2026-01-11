@@ -14,44 +14,33 @@ body {
 }
 
 #app {
-    max-width: 800px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
-}
-
-/* Header */
-header {
-    background: linear-gradient(135deg, #FFB6C1, #FF69B4);
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    padding: 0;
+    min-height: 100vh;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    animation: slideDown 0.5s ease;
+    justify-content: center;
 }
 
-@keyframes slideDown {
+/* Settings Button - Fixed Position */
+.settings-btn-fixed {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 900;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
     from {
-        transform: translateY(-50px);
         opacity: 0;
+        transform: scale(0.8);
     }
     to {
-        transform: translateY(0);
         opacity: 1;
+        transform: scale(1);
     }
-}
-
-header h1 {
-    color: white;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-    font-size: 2.5em;
-}
-
-.header-controls {
-    display: flex;
-    gap: 10px;
 }
 
 .icon-btn {
@@ -71,25 +60,26 @@ header h1 {
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
 
+/* Main View */
+#mainView {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* Clock Container */
 .clock-container {
     background: transparent;
-    border-radius: 30px;
+    border-radius: 0;
     padding: 40px;
     box-shadow: none;
-    margin-bottom: 30px;
+    margin: 0;
     animation: fadeIn 0.8s ease;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .clock-type-toggle {
@@ -128,19 +118,19 @@ header h1 {
 }
 
 .time-display {
-    font-size: 5em;
+    font-size: 8em;
     font-weight: bold;
     color: rgba(255, 255, 255, 0.9);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    letter-spacing: 5px;
-    margin-bottom: 20px;
+    text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4);
+    letter-spacing: 10px;
+    margin-bottom: 30px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .date-display {
-    font-size: 1.5em;
+    font-size: 2em;
     color: rgba(255, 255, 255, 0.8);
-    margin-top: 15px;
+    margin-top: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -152,9 +142,9 @@ header h1 {
 }
 
 .analog-clock-svg {
-    width: 300px;
-    height: 300px;
-    filter: drop-shadow(3px 3px 8px rgba(0, 0, 0, 0.2));
+    width: 500px;
+    height: 500px;
+    filter: drop-shadow(5px 5px 12px rgba(0, 0, 0, 0.3));
 }
 
 /* Upcoming Events */
@@ -643,16 +633,30 @@ header h1 {
 
 /* Responsive */
 @media (max-width: 768px) {
-    header h1 {
-        font-size: 1.8em;
+    .settings-btn-fixed {
+        top: 15px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
     }
 
     .time-display {
-        font-size: 3em;
+        font-size: 4em;
+        letter-spacing: 5px;
+    }
+
+    .date-display {
+        font-size: 1.3em;
     }
 
     .clock-container {
         padding: 20px;
+    }
+
+    .analog-clock-svg {
+        width: 300px;
+        height: 300px;
     }
 
     .modal-content {
@@ -665,5 +669,20 @@ header h1 {
 
     .announcement-content p {
         font-size: 1.5em;
+    }
+}
+
+@media (min-width: 1200px) {
+    .time-display {
+        font-size: 10em;
+    }
+
+    .date-display {
+        font-size: 2.5em;
+    }
+
+    .analog-clock-svg {
+        width: 600px;
+        height: 600px;
     }
 }
