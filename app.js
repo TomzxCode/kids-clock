@@ -13,7 +13,10 @@ class KidsClockApp {
             ttsRate: 1,
             ttsPitch: 1,
             enable24Hour: false,
-            clockType: 'digital'
+            clockType: 'digital',
+            enableHourlyAnnouncement: false,
+            hourlyAnnouncementStart: '08:00',
+            hourlyAnnouncementEnd: '22:00'
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -429,10 +432,16 @@ class KidsClockApp {
         const now = new Date();
         const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const currentSeconds = now.getSeconds();
+        const currentMinutes = now.getMinutes();
 
         // Only trigger at the start of the minute (when seconds are 0)
         if (currentSeconds !== 0) {
             return;
+        }
+
+        // Check for hourly announcements (at the top of each hour)
+        if (currentMinutes === 0) {
+            this.checkHourlyAnnouncement(now);
         }
 
         this.events.forEach(event => {
@@ -440,6 +449,64 @@ class KidsClockApp {
                 this.triggerEvent(event);
             }
         });
+    }
+
+    checkHourlyAnnouncement(now) {
+        if (!this.settings.enableHourlyAnnouncement || !this.settings.enableTTS) {
+            return;
+        }
+
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const startTime = this.settings.hourlyAnnouncementStart;
+        const endTime = this.settings.hourlyAnnouncementEnd;
+
+        // Check if current time is within the configured range
+        if (this.isTimeInRange(currentTime, startTime, endTime)) {
+            this.announceTime(now);
+        }
+    }
+
+    isTimeInRange(current, start, end) {
+        // Convert times to minutes for comparison
+        const currentMinutes = parseInt(current.split(':')[0]) * 60 + parseInt(current.split(':')[1]);
+        const startMinutes = parseInt(start.split(':')[0]) * 60 + parseInt(start.split(':')[1]);
+        const endMinutes = parseInt(end.split(':')[0]) * 60 + parseInt(end.split(':')[1]);
+
+        if (startMinutes <= endMinutes) {
+            // Normal range (e.g., 08:00 to 22:00)
+            return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+        } else {
+            // Range crosses midnight (e.g., 22:00 to 08:00)
+            return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+        }
+    }
+
+    announceTime(now) {
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+
+        // Format the time announcement
+        let announcement;
+        if (this.settings.enable24Hour) {
+            announcement = `It is now ${hours} hundred hours`;
+        } else {
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+
+            if (minutes === 0) {
+                announcement = `It is now ${displayHours} o'clock ${period}`;
+            } else {
+                announcement = `It is now ${displayHours} ${minutes} ${period}`;
+            }
+        }
+
+        console.log('Hourly announcement:', announcement);
+
+        // Play notification sound
+        this.playNotificationSound();
+
+        // Speak the time
+        this.speak(announcement);
     }
 
     triggerEvent(event) {
@@ -699,6 +766,9 @@ class KidsClockApp {
         document.getElementById('ttsRate').value = this.settings.ttsRate;
         document.getElementById('ttsPitch').value = this.settings.ttsPitch;
         document.getElementById('enable24Hour').checked = this.settings.enable24Hour;
+        document.getElementById('enableHourlyAnnouncement').checked = this.settings.enableHourlyAnnouncement;
+        document.getElementById('hourlyAnnouncementStart').value = this.settings.hourlyAnnouncementStart;
+        document.getElementById('hourlyAnnouncementEnd').value = this.settings.hourlyAnnouncementEnd;
 
         document.getElementById('ttsRateValue').textContent = this.settings.ttsRate + 'x';
         document.getElementById('ttsPitchValue').textContent = this.settings.ttsPitch + 'x';
@@ -720,6 +790,9 @@ class KidsClockApp {
         this.settings.ttsRate = parseFloat(document.getElementById('ttsRate').value);
         this.settings.ttsPitch = parseFloat(document.getElementById('ttsPitch').value);
         this.settings.enable24Hour = document.getElementById('enable24Hour').checked;
+        this.settings.enableHourlyAnnouncement = document.getElementById('enableHourlyAnnouncement').checked;
+        this.settings.hourlyAnnouncementStart = document.getElementById('hourlyAnnouncementStart').value;
+        this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
 
         this.saveSettings();
         this.closeSettings();
