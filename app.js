@@ -224,6 +224,10 @@ class KidsClockApp {
             this.testTextToSpeech();
         });
 
+        document.getElementById('testHourlyAnnouncement').addEventListener('click', () => {
+            this.testHourlyAnnouncement();
+        });
+
         // Time color management
         document.getElementById('addTimeColorBtn').addEventListener('click', () => {
             this.addTimeColorPeriod();
@@ -746,6 +750,11 @@ class KidsClockApp {
         }
 
         window.speechSynthesis.speak(utterance);
+    }
+
+    testHourlyAnnouncement() {
+        const now = new Date();
+        this.announceTime(now);
     }
 
     loadVoices() {
