@@ -122,10 +122,12 @@ class KidsClockApp {
         // Clock visibility checkboxes in settings
         document.getElementById('showDigitalClock').addEventListener('change', (e) => {
             this.updateClockVisibility();
+            this.saveCurrentSettings();
         });
 
         document.getElementById('showAnalogClock').addEventListener('change', (e) => {
             this.updateClockVisibility();
+            this.saveCurrentSettings();
         });
 
         // Add event button in settings
@@ -174,21 +176,48 @@ class KidsClockApp {
             this.closeSettings();
         });
 
-        document.getElementById('saveSettings').addEventListener('click', () => {
-            this.saveSettingsData();
+        // Immediate settings changes
+        document.getElementById('enableTTS').addEventListener('change', () => {
+            this.saveCurrentSettings();
         });
 
-        document.getElementById('cancelSettings').addEventListener('click', () => {
-            this.closeSettings();
+        document.getElementById('ttsVoice').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('enable24Hour').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('showSeconds').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('showAnalogSeconds').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('enableHourlyAnnouncement').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('hourlyAnnouncementStart').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('hourlyAnnouncementEnd').addEventListener('change', () => {
+            this.saveCurrentSettings();
         });
 
         // TTS controls
         document.getElementById('ttsRate').addEventListener('input', (e) => {
             document.getElementById('ttsRateValue').textContent = e.target.value + 'x';
+            this.saveCurrentSettings();
         });
 
         document.getElementById('ttsPitch').addEventListener('input', (e) => {
             document.getElementById('ttsPitchValue').textContent = e.target.value + 'x';
+            this.saveCurrentSettings();
         });
 
         document.getElementById('testTTS').addEventListener('click', () => {
@@ -814,7 +843,7 @@ class KidsClockApp {
         document.getElementById('settingsPanel').classList.add('hidden');
     }
 
-    saveSettingsData() {
+    saveCurrentSettings() {
         this.settings.enableTTS = document.getElementById('enableTTS').checked;
         this.settings.ttsVoice = document.getElementById('ttsVoice').value;
         this.settings.ttsRate = parseFloat(document.getElementById('ttsRate').value);
@@ -829,8 +858,6 @@ class KidsClockApp {
         this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
 
         this.saveSettings();
-        this.updateClockVisibility();
-        this.closeSettings();
     }
 
     saveSettings() {
