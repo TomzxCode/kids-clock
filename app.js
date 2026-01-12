@@ -31,7 +31,8 @@ class KidsClockApp {
             showSeconds: true,
             showAnalogSeconds: true,
             debugMode: false,
-            debugSpeed: 1
+            debugSpeed: 1,
+            backgroundMode: 'gradient'
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -145,6 +146,7 @@ class KidsClockApp {
         this.loadEvents();
         this.loadSettings();
         this.loadTimeColors();
+        this.generateStars();
         this.setupEventListeners();
         // Restore debug mode state from settings
         if (this.settings.debugMode) {
@@ -156,6 +158,7 @@ class KidsClockApp {
         this.renderEvents();
         this.loadVoices();
         this.applySavedClockType();
+        this.applyBackgroundMode();
     }
 
     // Clock Functions
@@ -362,6 +365,16 @@ class KidsClockApp {
             const speed = parseFloat(document.getElementById('debugSpeed').value) || 1;
             this.setDebugMode(enabled, speed);
             this.saveCurrentSettings();
+        });
+
+        // Background mode switching
+        document.querySelectorAll('input[name="backgroundMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.settings.backgroundMode = e.target.value;
+                this.saveSettings();
+                this.applyBackgroundMode();
+                this.updateBackground();
+            });
         });
     }
 
@@ -959,6 +972,15 @@ class KidsClockApp {
         document.getElementById('ttsRateValue').textContent = this.settings.ttsRate + 'x';
         document.getElementById('ttsPitchValue').textContent = this.settings.ttsPitch + 'x';
 
+        // Set background mode
+        const backgroundModeRadios = document.querySelectorAll('input[name="backgroundMode"]');
+        backgroundModeRadios.forEach(radio => {
+            radio.checked = (radio.value === this.settings.backgroundMode);
+        });
+
+        // Show/hide appropriate settings section
+        this.applyBackgroundModeUI();
+
         // Render time colors
         this.renderTimeColors();
 
@@ -1145,6 +1167,15 @@ class KidsClockApp {
     }
 
     updateBackground() {
+        // Update animated backgrounds if in that mode
+        this.updateAnimatedBackground();
+
+        // For gradient mode, update the body background
+        if (this.settings.backgroundMode !== 'gradient') {
+            document.body.style.background = 'transparent';
+            return;
+        }
+
         const now = this.getCurrentTime();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -1267,6 +1298,78 @@ class KidsClockApp {
         if (clockContainer) {
             clockContainer.style.background = 'transparent';
             clockContainer.style.backdropFilter = 'none';
+        }
+    }
+
+    // Animated Background Functions
+    generateStars() {
+        const starsContainer = document.getElementById('starsContainer');
+        if (!starsContainer) return;
+
+        starsContainer.innerHTML = '';
+        const numStars = 100;
+
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 60 + '%';
+            const size = Math.random() * 3 + 1;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            star.style.animationDelay = (Math.random() * 3) + 's';
+            star.style.animationDuration = ((Math.random() * 2) + 1.5) + 's';
+            starsContainer.appendChild(star);
+        }
+    }
+
+    applyBackgroundModeUI() {
+        const gradientSettings = document.getElementById('gradientBackgroundSettings');
+        const animatedInfo = document.getElementById('animatedBackgroundInfo');
+
+        if (this.settings.backgroundMode === 'animated') {
+            gradientSettings.classList.add('hidden');
+            animatedInfo.classList.remove('hidden');
+        } else {
+            gradientSettings.classList.remove('hidden');
+            animatedInfo.classList.add('hidden');
+        }
+    }
+
+    applyBackgroundMode() {
+        const dayBackground = document.getElementById('dayBackground');
+        const nightBackground = document.getElementById('nightBackground');
+
+        this.applyBackgroundModeUI();
+
+        if (this.settings.backgroundMode === 'animated') {
+            dayBackground.classList.remove('hidden');
+            nightBackground.classList.remove('hidden');
+            this.updateAnimatedBackground();
+        } else {
+            dayBackground.classList.add('hidden');
+            nightBackground.classList.add('hidden');
+        }
+    }
+
+    updateAnimatedBackground() {
+        if (this.settings.backgroundMode !== 'animated') return;
+
+        const now = this.getCurrentTime();
+        const hour = now.getHours();
+        const dayBackground = document.getElementById('dayBackground');
+        const nightBackground = document.getElementById('nightBackground');
+
+        // Daytime: 6:00 AM - 6:59 PM (06:00 - 18:59)
+        // Nighttime: 7:00 PM - 5:59 AM (19:00 - 05:59)
+        const isDaytime = hour >= 6 && hour < 19;
+
+        if (isDaytime) {
+            dayBackground.style.opacity = '1';
+            nightBackground.style.opacity = '0';
+        } else {
+            dayBackground.style.opacity = '0';
+            nightBackground.style.opacity = '1';
         }
     }
 }

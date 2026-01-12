@@ -11,6 +11,96 @@
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🕐</text></svg>">
 </head>
 <body>
+    <!-- Animated Day Background -->
+    <div id="dayBackground" class="animated-background day-background hidden">
+        <div class="day-sun">
+            <div class="sun-rays"></div>
+        </div>
+        <div class="day-cloud day-cloud-1"></div>
+        <div class="day-cloud day-cloud-2"></div>
+        <div class="day-cloud day-cloud-3"></div>
+        <div class="day-cloud day-cloud-4"></div>
+        <div class="day-bird day-bird-1">
+            <div class="day-bird-body">
+                <div class="day-bird-head">
+                    <div class="day-bird-eye"></div>
+                    <div class="day-bird-beak"></div>
+                </div>
+                <div class="day-bird-wing"></div>
+                <div class="day-bird-tail"></div>
+            </div>
+        </div>
+        <div class="day-bird day-bird-2">
+            <div class="day-bird-body">
+                <div class="day-bird-head">
+                    <div class="day-bird-eye"></div>
+                    <div class="day-bird-beak"></div>
+                </div>
+                <div class="day-bird-wing"></div>
+                <div class="day-bird-tail"></div>
+            </div>
+        </div>
+        <div class="day-bird day-bird-3">
+            <div class="day-bird-body">
+                <div class="day-bird-head">
+                    <div class="day-bird-eye"></div>
+                    <div class="day-bird-beak"></div>
+                </div>
+                <div class="day-bird-wing"></div>
+                <div class="day-bird-tail"></div>
+            </div>
+        </div>
+        <div class="day-bird day-bird-4">
+            <div class="day-bird-body">
+                <div class="day-bird-head">
+                    <div class="day-bird-eye"></div>
+                    <div class="day-bird-beak"></div>
+                </div>
+                <div class="day-bird-wing"></div>
+                <div class="day-bird-tail"></div>
+            </div>
+        </div>
+        <div class="day-bird day-bird-5">
+            <div class="day-bird-body">
+                <div class="day-bird-head">
+                    <div class="day-bird-eye"></div>
+                    <div class="day-bird-beak"></div>
+                </div>
+                <div class="day-bird-wing"></div>
+                <div class="day-bird-tail"></div>
+            </div>
+        </div>
+        <div class="day-grass">
+            <div class="day-flower day-flower-1">🌸</div>
+            <div class="day-flower day-flower-2">🌼</div>
+            <div class="day-flower day-flower-3">🌺</div>
+            <div class="day-flower day-flower-4">🌻</div>
+            <div class="day-flower day-flower-5">🌷</div>
+        </div>
+    </div>
+
+    <!-- Animated Night Background -->
+    <div id="nightBackground" class="animated-background night-background hidden">
+        <div class="night-moon">
+            <div class="moon-crater moon-crater-1"></div>
+            <div class="moon-crater moon-crater-2"></div>
+            <div class="moon-crater moon-crater-3"></div>
+        </div>
+        <div id="starsContainer"></div>
+        <div class="shooting-star shooting-star-1"></div>
+        <div class="shooting-star shooting-star-2"></div>
+        <div class="shooting-star shooting-star-3"></div>
+        <div class="night-cloud night-cloud-1"></div>
+        <div class="night-cloud night-cloud-2"></div>
+        <div class="night-grass">
+            <div class="firefly firefly-1"></div>
+            <div class="firefly firefly-2"></div>
+            <div class="firefly firefly-3"></div>
+            <div class="firefly firefly-4"></div>
+            <div class="firefly firefly-5"></div>
+        </div>
+    </div>
+
     <div id="app">
         <!-- Settings Button -->
         <button id="settingsBtn" class="icon-btn settings-btn-fixed" aria-label="Settings">⚙️</button>
@@ -198,14 +288,38 @@
 
                     <hr style="margin: 20px 0; border: 1px solid #ddd;">
 
-                    <h3 style="color: #667eea; margin-bottom: 15px;">🎨 Background Colors</h3>
+                    <h3 style="color: #667eea; margin-bottom: 15px;">🎨 Background</h3>
 
                     <div class="form-group">
+                        <label>Background Mode:</label>
+                        <div style="margin-top: 10px;">
+                            <label style="display: block; margin-bottom: 8px;">
+                                <input type="radio" name="backgroundMode" value="gradient" checked>
+                                Gradient Colors (smooth transitions)
+                            </label>
+                            <label style="display: block; margin-bottom: 8px;">
+                                <input type="radio" name="backgroundMode" value="animated">
+                                Animated Day/Night (scenes with animations)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="gradientBackgroundSettings" class="form-group">
                         <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
                             Configure background colors for different times of day. Colors will transition smoothly.
                         </p>
                         <div id="timeColorsList"></div>
                         <button id="addTimeColorBtn" class="btn-secondary" style="width: 100%; margin-top: 10px;">+ Add Time Period</button>
+                    </div>
+
+                    <div id="animatedBackgroundInfo" class="form-group hidden">
+                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                            Animated backgrounds automatically show a sunny day scene during daytime hours and a starry night scene during nighttime hours.
+                        </p>
+                        <p style="font-size: 0.9em; color: #666;">
+                            Daytime: ☀️ 6:00 AM - 7:00 PM<br>
+                            Nighttime: 🌙 7:00 PM - 6:00 AM
+                        </p>
                     </div>
 
                     <hr style="margin: 20px 0; border: 1px solid #ddd;">
