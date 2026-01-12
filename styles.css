@@ -1101,6 +1101,41 @@ body {
     animation-duration: 32s;
 }
 
+/* Reverse birds - flying right to left */
+.day-bird-reverse {
+    right: -50px;
+    left: auto;
+}
+
+.day-bird-reverse .day-bird-body {
+    transform: translate(-50%, -50%) scaleX(-1);
+}
+
+.day-bird-6 {
+    top: 18%;
+    animation-delay: -5s;
+    --bird-color: #E76F51;
+    animation-duration: 28s;
+}
+
+.day-bird-7 {
+    top: 35%;
+    animation-delay: -15s;
+    --bird-color: #F4A261;
+    animation-duration: 30s;
+}
+
+.day-bird-8 {
+    top: 12%;
+    animation-delay: -25s;
+    --bird-color: #2A9D8F;
+    animation-duration: 26s;
+}
+
+.day-bird-reverse {
+    animation-name: birdFlyReverse;
+}
+
 @keyframes birdFly {
     0% { transform: translateX(0) translateY(0) rotate(0deg); }
     20% { transform: translateX(20vw) translateY(-20px) rotate(-3deg); }
@@ -1110,12 +1145,22 @@ body {
     100% { transform: translateX(110vw) translateY(0) rotate(0deg); }
 }
 
+@keyframes birdFlyReverse {
+    0% { transform: translateX(0) translateY(0) rotate(0deg); }
+    20% { transform: translateX(-20vw) translateY(-15px) rotate(3deg); }
+    40% { transform: translateX(-40vw) translateY(12px) rotate(-2deg); }
+    60% { transform: translateX(-60vw) translateY(-8px) rotate(1deg); }
+    80% { transform: translateX(-85vw) translateY(6px) rotate(-1deg); }
+    100% { transform: translateX(-110vw) translateY(0) rotate(0deg); }
+}
+
 .day-grass {
     position: absolute;
     bottom: 0;
     width: 100%;
     height: 80px;
     background: linear-gradient(180deg, #90EE90 0%, #228B22 100%);
+    z-index: 1;
 }
 
 .day-flower {
@@ -1134,6 +1179,485 @@ body {
 @keyframes flowerSway {
     0%, 100% { transform: rotate(-5deg); }
     50% { transform: rotate(5deg); }
+}
+
+/* Trees - Multi-layered pine trees */
+.day-tree {
+    position: absolute;
+    bottom: 60px;
+    z-index: 2;
+}
+
+.day-tree::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 35px;
+    background: linear-gradient(90deg, #5D4037 0%, #8B4513 30%, #A0522D 70%, #5D4037 100%);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px 2px 4px 4px;
+    box-shadow: inset -4px 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.day-tree .pine-foliage {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.day-tree .pine-foliage-top {
+    bottom: 60px;
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 30px solid var(--pine-dark, #1a5a1a);
+    filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.day-tree .pine-foliage-middle {
+    bottom: 45px;
+    width: 0;
+    height: 0;
+    border-left: 28px solid transparent;
+    border-right: 28px solid transparent;
+    border-bottom: 28px solid var(--pine-mid, #228B22);
+    filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.day-tree .pine-foliage-bottom {
+    bottom: 30px;
+    width: 0;
+    height: 0;
+    border-left: 35px solid transparent;
+    border-right: 35px solid transparent;
+    border-bottom: 25px solid var(--pine-light, #2E8B57);
+    filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.day-tree-1 {
+    left: 10%;
+    animation: treeSway1 4s ease-in-out infinite;
+    --pine-dark: #1a6b1a;
+    --pine-mid: #228B22;
+    --pine-light: #2E8B57;
+}
+
+.day-tree-2 {
+    left: 25%;
+    animation: treeSway2 5s ease-in-out infinite;
+    animation-delay: 1s;
+    --pine-dark: #1a7a1a;
+    --pine-mid: #32CD32;
+    --pine-light: #3CB371;
+}
+
+.day-tree-2::before {
+    height: 45px;
+}
+
+.day-tree-2 .pine-foliage-top {
+    border-left-width: 24px;
+    border-right-width: 24px;
+    border-bottom-width: 35px;
+}
+
+.day-tree-2 .pine-foliage-middle {
+    border-left-width: 32px;
+    border-right-width: 32px;
+    border-bottom-width: 32px;
+}
+
+.day-tree-2 .pine-foliage-bottom {
+    border-left-width: 40px;
+    border-right-width: 40px;
+    border-bottom-width: 28px;
+}
+
+.day-tree-3 {
+    left: 40%;
+    animation: treeSway1 4.5s ease-in-out infinite;
+    animation-delay: 2s;
+    --pine-dark: #145214;
+    --pine-mid: #1a6b1a;
+    --pine-light: #228B22;
+}
+
+.day-tree-4 {
+    left: 55%;
+    animation: treeSway2 4.2s ease-in-out infinite;
+    animation-delay: 0.5s;
+    --pine-dark: #1a5a1a;
+    --pine-mid: #228B22;
+    --pine-light: #2E8B57;
+}
+
+.day-tree-5 {
+    left: 70%;
+    animation: treeSway1 4.8s ease-in-out infinite;
+    animation-delay: 1.5s;
+    --pine-dark: #1a7a1a;
+    --pine-mid: #32CD32;
+    --pine-light: #3CB371;
+}
+
+.day-tree-5::before {
+    height: 42px;
+}
+
+.day-tree-5 .pine-foliage-top {
+    border-left-width: 22px;
+    border-right-width: 22px;
+    border-bottom-width: 32px;
+}
+
+.day-tree-5 .pine-foliage-middle {
+    border-left-width: 30px;
+    border-right-width: 30px;
+    border-bottom-width: 30px;
+}
+
+.day-tree-5 .pine-foliage-bottom {
+    border-left-width: 38px;
+    border-right-width: 38px;
+    border-bottom-width: 26px;
+}
+
+.day-tree-6 {
+    left: 85%;
+    animation: treeSway2 4.3s ease-in-out infinite;
+    animation-delay: 0.8s;
+    --pine-dark: #145214;
+    --pine-mid: #228B22;
+    --pine-light: #32CD32;
+}
+
+.day-tree-7 {
+    left: 100%;
+    animation: treeSway1 4.6s ease-in-out infinite;
+    animation-delay: 1.2s;
+    --pine-dark: #1a5a1a;
+    --pine-mid: #2E8B57;
+    --pine-light: #3CB371;
+}
+
+.day-tree-7::before {
+    height: 50px;
+}
+
+.day-tree-7 .pine-foliage-top {
+    border-left-width: 26px;
+    border-right-width: 26px;
+    border-bottom-width: 38px;
+}
+
+.day-tree-7 .pine-foliage-middle {
+    border-left-width: 34px;
+    border-right-width: 34px;
+    border-bottom-width: 34px;
+}
+
+.day-tree-7 .pine-foliage-bottom {
+    border-left-width: 42px;
+    border-right-width: 42px;
+    border-bottom-width: 30px;
+}
+
+@keyframes treeSway1 {
+    0%, 100% { transform: rotate(-1deg); }
+    50% { transform: rotate(1deg); }
+}
+
+@keyframes treeSway2 {
+    0%, 100% { transform: rotate(-0.5deg); }
+    50% { transform: rotate(0.5deg); }
+}
+
+/* Leafy Trees - Multi-cluster deciduous trees */
+.day-leafy-tree {
+    position: absolute;
+    bottom: 60px;
+    z-index: 2;
+}
+
+.day-leafy-tree::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 30px;
+    background: linear-gradient(90deg, #4a3728 0%, #654321 40%, #8B4513 60%, #4a3728 100%);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+    box-shadow: inset -3px 0 8px rgba(0, 0, 0, 0.5);
+}
+
+.day-leafy-tree .leafy-cluster {
+    position: absolute;
+    border-radius: 50%;
+    box-shadow: inset -4px -4px 12px rgba(0, 0, 0, 0.3), 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.day-leafy-tree .leafy-cluster-1 {
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(ellipse at 30% 30%, var(--leaf-light-1, #90EE90) 0%, var(--leaf-mid-1, #228B22) 40%, var(--leaf-dark-1, #145214) 100%);
+}
+
+.day-leafy-tree .leafy-cluster-2 {
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 38px;
+    height: 38px;
+    background: radial-gradient(ellipse at 25% 35%, var(--leaf-light-2, #98FB98) 0%, var(--leaf-mid-2, #32CD32) 45%, var(--leaf-dark-2, #1a6b1a) 100%);
+}
+
+.day-leafy-tree .leafy-cluster-3 {
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 28px;
+    background: radial-gradient(ellipse at 20% 30%, var(--leaf-light-3, #7CFC00) 0%, var(--leaf-mid-3, #3CB371) 50%, var(--leaf-dark-3, #228B22) 100%);
+}
+
+.day-leafy-tree-1 {
+    left: 5%;
+    animation: treeSway1 3.8s ease-in-out infinite;
+    --leaf-light-1: #90EE90;
+    --leaf-mid-1: #32CD32;
+    --leaf-dark-1: #1a7a1a;
+    --leaf-light-2: #98FB98;
+    --leaf-mid-2: #90EE90;
+    --leaf-dark-2: #32CD32;
+    --leaf-light-3: #7CFC00;
+    --leaf-mid-3: #32CD32;
+    --leaf-dark-3: #228B22;
+}
+
+.day-leafy-tree-2 {
+    left: 20%;
+    animation: treeSway2 4.5s ease-in-out infinite;
+    animation-delay: 0.7s;
+    --leaf-light-1: #7CFC00;
+    --leaf-mid-1: #3CB371;
+    --leaf-dark-1: #228B22;
+    --leaf-light-2: #90EE90;
+    --leaf-mid-2: #32CD32;
+    --leaf-dark-2: #228B22;
+    --leaf-light-3: #98FB98;
+    --leaf-mid-3: #90EE90;
+    --leaf-dark-3: #2E8B57;
+}
+
+.day-leafy-tree-2::before {
+    height: 38px;
+}
+
+.day-leafy-tree-2 .leafy-cluster-1 {
+    width: 60px;
+    height: 58px;
+    bottom: 55px;
+}
+
+.day-leafy-tree-2 .leafy-cluster-2 {
+    width: 45px;
+    height: 45px;
+    bottom: 38px;
+}
+
+.day-leafy-tree-2 .leafy-cluster-3 {
+    width: 32px;
+    height: 32px;
+    bottom: 24px;
+}
+
+.day-leafy-tree-3 {
+    left: 33%;
+    animation: treeSway1 4.2s ease-in-out infinite;
+    animation-delay: 1.5s;
+    --leaf-light-1: #98FB98;
+    --leaf-mid-1: #90EE90;
+    --leaf-dark-1: #32CD32;
+    --leaf-light-2: #7CFC00;
+    --leaf-mid-2: #3CB371;
+    --leaf-dark-2: #2E8B57;
+    --leaf-light-3: #90EE90;
+    --leaf-mid-3: #32CD32;
+    --leaf-dark-3: #228B22;
+}
+
+.day-leafy-tree-3 .leafy-cluster-1 {
+    width: 45px;
+    height: 45px;
+}
+
+.day-leafy-tree-3 .leafy-cluster-2 {
+    width: 34px;
+    height: 34px;
+}
+
+.day-leafy-tree-3 .leafy-cluster-3 {
+    width: 24px;
+    height: 24px;
+}
+
+/* Car - Cute cartoon car driving across */
+.day-car {
+    position: absolute;
+    bottom: 70px;
+    left: -150px;
+    animation: carDrive 35s linear infinite;
+    z-index: 20;
+}
+
+.day-car .car-body {
+    position: relative;
+    width: 80px;
+    height: 30px;
+    background: linear-gradient(180deg, #FF6B6B 0%, #EE5A5A 100%);
+    border-radius: 10px 10px 5px 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.day-car .car-top {
+    position: absolute;
+    width: 45px;
+    height: 20px;
+    background: linear-gradient(180deg, #FF6B6B 0%, #EE5A5A 100%);
+    border-radius: 8px 8px 0 0;
+    top: -18px;
+    left: 15px;
+}
+
+.day-car .car-window {
+    position: absolute;
+    width: 16px;
+    height: 12px;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
+    border-radius: 4px 4px 0 0;
+    top: -14px;
+}
+
+.day-car .car-window-left {
+    left: 18px;
+}
+
+.day-car .car-window-right {
+    left: 38px;
+}
+
+.day-car .car-wheel {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #333 0%, #555 50%, #333 100%);
+    border-radius: 50%;
+    bottom: -8px;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.day-car .car-wheel::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #888;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.day-car .car-wheel-front {
+    left: 10px;
+}
+
+.day-car .car-wheel-back {
+    right: 10px;
+}
+
+.day-car .car-headlight {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #FFD700;
+    border-radius: 50%;
+    right: -2px;
+    top: 16px;
+    box-shadow: 0 0 8px #FFD700;
+}
+
+.day-car .car-headlight-beam {
+    display: none;
+}
+
+.day-car .car-taillight {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #FF4444;
+    border-radius: 50%;
+    left: -2px;
+    top: 16px;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.8);
+}
+
+.day-car .car-taillight-cone {
+    display: none;
+}
+
+@keyframes carDrive {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(30vw) translateY(-2px); }
+    50% { transform: translateX(60vw) translateY(2px); }
+    75% { transform: translateX(90vw) translateY(-1px); }
+    100% { transform: translateX(calc(100vw + 200px)) translateY(0); }
+}
+
+@keyframes headlightBlink {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.3; }
+}
+
+/* Road - Gray road with dashed center line */
+.day-road {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(180deg, #696969 0%, #505050 50%, #696969 100%);
+    border-top: 2px solid #808080;
+    border-bottom: 2px solid #404040;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.road-dashes {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    transform: translateY(-50%);
+    background: repeating-linear-gradient(
+        90deg,
+        #FFD700 0px,
+        #FFD700 40px,
+        transparent 40px,
+        transparent 80px
+    );
+    border-radius: 2px;
+    opacity: 0.9;
+    box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
 }
 
 /* Night Background */
@@ -1304,6 +1828,75 @@ body {
     left: 30px;
 }
 
+.night-cloud-3 {
+    width: 90px;
+    height: 38px;
+    top: 25%;
+    left: -110px;
+    animation: nightCloudFloat3 70s linear infinite;
+    animation-delay: -15s;
+}
+
+.night-cloud-3::before {
+    width: 55px;
+    height: 55px;
+    top: -28px;
+    left: 12px;
+}
+
+.night-cloud-3::after {
+    width: 62px;
+    height: 62px;
+    top: -31px;
+    left: 35px;
+}
+
+.night-cloud-4 {
+    width: 70px;
+    height: 32px;
+    top: 35%;
+    left: -90px;
+    animation: nightCloudFloat4 85s linear infinite;
+    animation-delay: -45s;
+}
+
+.night-cloud-4::before {
+    width: 45px;
+    height: 45px;
+    top: -22px;
+    left: 10px;
+}
+
+.night-cloud-4::after {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 25px;
+}
+
+.night-cloud-5 {
+    width: 120px;
+    height: 45px;
+    top: 18%;
+    left: -150px;
+    animation: nightCloudFloat5 95s linear infinite;
+    animation-delay: -60s;
+}
+
+.night-cloud-5::before {
+    width: 70px;
+    height: 70px;
+    top: -35px;
+    left: 20px;
+}
+
+.night-cloud-5::after {
+    width: 80px;
+    height: 80px;
+    top: -40px;
+    left: 50px;
+}
+
 @keyframes nightCloudFloat1 {
     from { transform: translateX(0); }
     to { transform: translateX(calc(100vw + 250px)); }
@@ -1314,12 +1907,31 @@ body {
     to { transform: translateX(calc(100vw + 200px)); }
 }
 
+@keyframes nightCloudFloat3 {
+    0% { transform: translateX(0) translateY(0); }
+    50% { transform: translateX(50vw) translateY(-10px); }
+    100% { transform: translateX(calc(100vw + 220px)) translateY(0); }
+}
+
+@keyframes nightCloudFloat4 {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 180px)); }
+}
+
+@keyframes nightCloudFloat5 {
+    0% { transform: translateX(0) translateY(0); }
+    33% { transform: translateX(30vw) translateY(8px); }
+    66% { transform: translateX(60vw) translateY(-5px); }
+    100% { transform: translateX(calc(100vw + 280px)) translateY(0); }
+}
+
 .night-grass {
     position: absolute;
     bottom: 0;
     width: 100%;
     height: 80px;
     background: linear-gradient(180deg, #1a3a1a 0%, #0a1a0a 100%);
+    z-index: 1;
 }
 
 .firefly {
@@ -1367,4 +1979,490 @@ body {
     25% { transform: translate(20px, -30px); opacity: 1; }
     50% { transform: translate(-10px, -50px); opacity: 0.5; }
     75% { transform: translate(30px, -20px); opacity: 1; }
+}
+
+/* Night Trees - Silhouette trees with multi-layered foliage */
+.night-tree {
+    position: absolute;
+    bottom: 60px;
+    z-index: 2;
+}
+
+.night-tree::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 35px;
+    background: linear-gradient(90deg, #2a2a2a 0%, #1a1a2a 50%, #0f0f1f 100%);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px 2px 4px 4px;
+    box-shadow: inset -4px 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.night-tree .pine-foliage {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.night-tree .pine-foliage-top {
+    bottom: 60px;
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 30px solid var(--pine-dark, #0a0a1a);
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.night-tree .pine-foliage-middle {
+    bottom: 45px;
+    width: 0;
+    height: 0;
+    border-left: 28px solid transparent;
+    border-right: 28px solid transparent;
+    border-bottom: 28px solid var(--pine-mid, #1a1a2a);
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.night-tree .pine-foliage-bottom {
+    bottom: 30px;
+    width: 0;
+    height: 0;
+    border-left: 35px solid transparent;
+    border-right: 35px solid transparent;
+    border-bottom: 25px solid var(--pine-light, #2a2a3a);
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.night-tree-1 {
+    left: 10%;
+    animation: treeSway1 4s ease-in-out infinite;
+    --pine-dark: #0a0a1a;
+    --pine-mid: #1a1a2a;
+    --pine-light: #2a2a3a;
+}
+
+.night-tree-2 {
+    left: 25%;
+    animation: treeSway2 5s ease-in-out infinite;
+    animation-delay: 1s;
+    --pine-dark: #050505;
+    --pine-mid: #1a1a2a;
+    --pine-light: #2a2a3a;
+}
+
+.night-tree-2::before {
+    height: 45px;
+}
+
+.night-tree-2 .pine-foliage-top {
+    border-left-width: 24px;
+    border-right-width: 24px;
+    border-bottom-width: 35px;
+}
+
+.night-tree-2 .pine-foliage-middle {
+    border-left-width: 32px;
+    border-right-width: 32px;
+    border-bottom-width: 32px;
+}
+
+.night-tree-2 .pine-foliage-bottom {
+    border-left-width: 40px;
+    border-right-width: 40px;
+    border-bottom-width: 28px;
+}
+
+.night-tree-3 {
+    left: 40%;
+    animation: treeSway1 4.5s ease-in-out infinite;
+    animation-delay: 2s;
+    --pine-dark: #080808;
+    --pine-mid: #151515;
+    --pine-light: #1a1a2a;
+}
+
+.night-tree-4 {
+    left: 55%;
+    animation: treeSway2 4.2s ease-in-out infinite;
+    animation-delay: 0.5s;
+    --pine-dark: #0a0a1a;
+    --pine-mid: #1a1a2a;
+    --pine-light: #2a2a3a;
+}
+
+.night-tree-5 {
+    left: 70%;
+    animation: treeSway1 4.8s ease-in-out infinite;
+    animation-delay: 1.5s;
+    --pine-dark: #050505;
+    --pine-mid: #1a1a2a;
+    --pine-light: #2a2a3a;
+}
+
+.night-tree-5::before {
+    height: 42px;
+}
+
+.night-tree-5 .pine-foliage-top {
+    border-left-width: 22px;
+    border-right-width: 22px;
+    border-bottom-width: 32px;
+}
+
+.night-tree-5 .pine-foliage-middle {
+    border-left-width: 30px;
+    border-right-width: 30px;
+    border-bottom-width: 30px;
+}
+
+.night-tree-5 .pine-foliage-bottom {
+    border-left-width: 38px;
+    border-right-width: 38px;
+    border-bottom-width: 26px;
+}
+
+.night-tree-6 {
+    left: 85%;
+    animation: treeSway2 4.3s ease-in-out infinite;
+    animation-delay: 0.8s;
+    --pine-dark: #080808;
+    --pine-mid: #1a1a2a;
+    --pine-light: #252535;
+}
+
+.night-tree-7 {
+    left: 100%;
+    animation: treeSway1 4.6s ease-in-out infinite;
+    animation-delay: 1.2s;
+    --pine-dark: #0a0a1a;
+    --pine-mid: #2a2a3a;
+    --pine-light: #3a3a4a;
+}
+
+.night-tree-7::before {
+    height: 50px;
+}
+
+.night-tree-7 .pine-foliage-top {
+    border-left-width: 26px;
+    border-right-width: 26px;
+    border-bottom-width: 38px;
+}
+
+.night-tree-7 .pine-foliage-middle {
+    border-left-width: 34px;
+    border-right-width: 34px;
+    border-bottom-width: 34px;
+}
+
+.night-tree-7 .pine-foliage-bottom {
+    border-left-width: 42px;
+    border-right-width: 42px;
+    border-bottom-width: 30px;
+}
+
+/* Night Leafy Trees - Multi-cluster silhouette deciduous trees */
+.night-leafy-tree {
+    position: absolute;
+    bottom: 60px;
+    z-index: 2;
+}
+
+.night-leafy-tree::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 30px;
+    background: linear-gradient(90deg, #2a2a2a 0%, #1a1a2a 50%, #0f0f1f 100%);
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 2px;
+    box-shadow: inset -3px 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.night-leafy-tree .leafy-cluster {
+    position: absolute;
+    border-radius: 50%;
+    box-shadow: inset -4px -4px 12px rgba(0, 0, 0, 0.4), 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.night-leafy-tree .leafy-cluster-1 {
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(ellipse at 30% 30%, var(--leaf-light-1, #3a3a3a) 0%, var(--leaf-mid-1, #1a1a2a) 40%, var(--leaf-dark-1, #050505) 100%);
+}
+
+.night-leafy-tree .leafy-cluster-2 {
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 38px;
+    height: 38px;
+    background: radial-gradient(ellipse at 25% 35%, var(--leaf-light-2, #3a3a3a) 0%, var(--leaf-mid-2, #1a1a2a) 45%, var(--leaf-dark-2, #0a0a1a) 100%);
+}
+
+.night-leafy-tree .leafy-cluster-3 {
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 28px;
+    background: radial-gradient(ellipse at 20% 30%, var(--leaf-light-3, #2a2a3a) 0%, var(--leaf-mid-3, #1a1a2a) 50%, var(--leaf-dark-3, #050505) 100%);
+}
+
+.night-leafy-tree-1 {
+    left: 5%;
+    animation: treeSway1 3.8s ease-in-out infinite;
+    --leaf-light-1: #3a3a3a;
+    --leaf-mid-1: #1a1a2a;
+    --leaf-dark-1: #050505;
+    --leaf-light-2: #3a3a3a;
+    --leaf-mid-2: #252535;
+    --leaf-dark-2: #0a0a1a;
+    --leaf-light-3: #2a2a3a;
+    --leaf-mid-3: #1a1a2a;
+    --leaf-dark-3: #080808;
+}
+
+.night-leafy-tree-2 {
+    left: 20%;
+    animation: treeSway2 4.5s ease-in-out infinite;
+    animation-delay: 0.7s;
+    --leaf-light-1: #4a4a4a;
+    --leaf-mid-1: #2a2a3a;
+    --leaf-dark-1: #0a0a1a;
+    --leaf-light-2: #3a3a3a;
+    --leaf-mid-2: #1a1a2a;
+    --leaf-dark-2: #050505;
+    --leaf-light-3: #3a3a3a;
+    --leaf-mid-3: #252535;
+    --leaf-dark-3: #0a0a1a;
+}
+
+.night-leafy-tree-2::before {
+    height: 38px;
+}
+
+.night-leafy-tree-2 .leafy-cluster-1 {
+    width: 60px;
+    height: 58px;
+    bottom: 55px;
+}
+
+.night-leafy-tree-2 .leafy-cluster-2 {
+    width: 45px;
+    height: 45px;
+    bottom: 38px;
+}
+
+.night-leafy-tree-2 .leafy-cluster-3 {
+    width: 32px;
+    height: 32px;
+    bottom: 24px;
+}
+
+.night-leafy-tree-3 {
+    left: 33%;
+    animation: treeSway1 4.2s ease-in-out infinite;
+    animation-delay: 1.5s;
+    --leaf-light-1: #3a3a3a;
+    --leaf-mid-1: #252535;
+    --leaf-dark-1: #0a0a1a;
+    --leaf-light-2: #4a4a4a;
+    --leaf-mid-2: #2a2a3a;
+    --leaf-dark-2: #0a0a1a;
+    --leaf-light-3: #3a3a3a;
+    --leaf-mid-3: #1a1a2a;
+    --leaf-dark-3: #050505;
+}
+
+.night-leafy-tree-3 .leafy-cluster-1 {
+    width: 45px;
+    height: 45px;
+}
+
+.night-leafy-tree-3 .leafy-cluster-2 {
+    width: 34px;
+    height: 34px;
+}
+
+.night-leafy-tree-3 .leafy-cluster-3 {
+    width: 24px;
+    height: 24px;
+}
+
+/* Night Road - Darker road */
+.night-road {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 50%, #3a3a3a 100%);
+    border-top: 2px solid #4a4a4a;
+    border-bottom: 2px solid #1a1a1a;
+    overflow: hidden;
+    z-index: 10;
+}
+
+.night-road .road-dashes {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    transform: translateY(-50%);
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 200, 0.6) 0px,
+        rgba(255, 255, 200, 0.6) 40px,
+        transparent 40px,
+        transparent 80px
+    );
+    border-radius: 2px;
+    opacity: 0.9;
+    box-shadow: 0 0 8px rgba(255, 255, 200, 0.4);
+}
+
+/* Night Car - Darker car with bright headlights */
+.night-car {
+    position: absolute;
+    bottom: 70px;
+    left: -150px;
+    animation: carDrive 35s linear infinite;
+    z-index: 20;
+}
+
+.night-car .car-body {
+    position: relative;
+    width: 80px;
+    height: 30px;
+    background: linear-gradient(180deg, #8B0000 0%, #6B0000 100%);
+    border-radius: 10px 10px 5px 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.night-car .car-top {
+    position: absolute;
+    width: 45px;
+    height: 20px;
+    background: linear-gradient(180deg, #8B0000 0%, #6B0000 100%);
+    border-radius: 8px 8px 0 0;
+    top: -18px;
+    left: 15px;
+}
+
+.night-car .car-window {
+    position: absolute;
+    width: 16px;
+    height: 12px;
+    background: linear-gradient(180deg, #1a1a3e 0%, #2a2a4e 100%);
+    border-radius: 4px 4px 0 0;
+    top: -14px;
+}
+
+.night-car .car-window-left {
+    left: 18px;
+}
+
+.night-car .car-window-right {
+    left: 38px;
+}
+
+.night-car .car-wheel {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #333 50%, #1a1a1a 100%);
+    border-radius: 50%;
+    bottom: -8px;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.night-car .car-wheel::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #444;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.night-car .car-wheel-front {
+    left: 10px;
+}
+
+.night-car .car-wheel-back {
+    right: 10px;
+}
+
+.night-car .car-headlight {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #FFFF99;
+    border-radius: 50%;
+    right: -3px;
+    top: 15px;
+    box-shadow: 0 0 15px #FFFF99, 0 0 30px rgba(255, 255, 153, 0.8);
+}
+
+.night-car .car-headlight-beam {
+    position: absolute;
+    width: 150px;
+    height: 22px;
+    right: -150px;
+    top: 7px;
+    background: linear-gradient(90deg,
+        rgba(255, 255, 200, 0.8) 0%,
+        rgba(255, 255, 200, 0.3) 60%,
+        transparent 100%
+    );
+    clip-path: polygon(0% 23%, 100% 0%, 100% 100%, 0% 77%);
+    opacity: 0.9;
+    filter: blur(5px);
+}
+
+.night-car .car-taillight {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #FF3333;
+    border-radius: 50%;
+    left: -3px;
+    top: 15px;
+    box-shadow: 0 0 15px rgba(255, 51, 51, 1), 0 0 30px rgba(255, 51, 51, 0.6);
+    animation: taillightGlow 2s ease-in-out infinite;
+}
+
+.night-car .car-taillight-cone {
+    position: absolute;
+    width: 60px;
+    height: 14px;
+    left: -60px;
+    top: 10px;
+    background: linear-gradient(270deg,
+        rgba(255, 51, 51, 0.7) 0%,
+        rgba(255, 51, 51, 0.2) 60%,
+        transparent 100%
+    );
+    clip-path: polygon(100% 29%, 0% 0%, 0% 100%, 100% 71%);
+    opacity: 0.8;
+    filter: blur(3px);
+}
+
+@keyframes taillightGlow {
+    0%, 100% { box-shadow: 0 0 15px rgba(255, 51, 51, 1), 0 0 30px rgba(255, 51, 51, 0.6); }
+    50% { box-shadow: 0 0 20px rgba(255, 51, 51, 1), 0 0 40px rgba(255, 51, 51, 0.8); }
 }
