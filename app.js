@@ -40,7 +40,8 @@ class KidsClockApp {
             { time: '12:00', color1: '#FFD700', color2: '#FFA500', name: 'Noon' },
             { time: '17:00', color1: '#FF6B6B', color2: '#EE5A6F', name: 'Evening' },
             { time: '19:00', color1: '#667eea', color2: '#764ba2', name: 'Dusk' },
-            { time: '21:00', color1: '#000000', color2: '#1a1a2e', name: 'Night' }
+            { time: '21:00', color1: '#000000', color2: '#1a1a2e', name: 'Night' },
+            { time: '05:00', color1: '#000000', color2: '#1a1a2e', name: 'Night' }
         ];
         this.init();
     }
@@ -1090,6 +1091,7 @@ class KidsClockApp {
         if (stored) {
             try {
                 this.timeColors = JSON.parse(stored);
+                this.sortTimeColors();
             } catch (e) {
                 console.error('Error loading time colors:', e);
             }
@@ -1098,6 +1100,14 @@ class KidsClockApp {
 
     saveTimeColors() {
         localStorage.setItem('kidsClockTimeColors', JSON.stringify(this.timeColors));
+    }
+
+    sortTimeColors() {
+        this.timeColors.sort((a, b) => {
+            const aMinutes = parseInt(a.time.split(':')[0]) * 60 + parseInt(a.time.split(':')[1]);
+            const bMinutes = parseInt(b.time.split(':')[0]) * 60 + parseInt(b.time.split(':')[1]);
+            return aMinutes - bMinutes;
+        });
     }
 
     renderTimeColors() {
@@ -1111,7 +1121,7 @@ class KidsClockApp {
         container.innerHTML = this.timeColors.map((tc, index) => `
             <div class="time-color-item">
                 <div class="time-color-row">
-                    <input type="time" value="${tc.time}" onchange="app.updateTimeColor(${index}, 'time', this.value)" title="Time (24h format)">
+                    <input type="time" value="${tc.time}" onblur="app.updateTimeColorAndSort(${index}, 'time', this.value)" title="Time (24h format)">
                     <input type="text" placeholder="Name" value="${tc.name || ''}" onchange="app.updateTimeColor(${index}, 'name', this.value)" style="flex: 1; padding: 8px; border: 2px solid #ddd; border-radius: 8px;">
                     <button onclick="app.removeTimeColor(${index})">✖️</button>
                 </div>
@@ -1133,6 +1143,7 @@ class KidsClockApp {
             color2: '#764ba2',
             name: 'New Period'
         });
+        this.sortTimeColors();
         this.saveTimeColors();
         this.renderTimeColors();
     }
@@ -1140,6 +1151,18 @@ class KidsClockApp {
     updateTimeColor(index, field, value) {
         if (this.timeColors[index]) {
             this.timeColors[index][field] = value;
+            this.saveTimeColors();
+            this.renderTimeColors();
+            this.updateBackground();
+        }
+    }
+
+    updateTimeColorAndSort(index, field, value) {
+        if (this.timeColors[index]) {
+            this.timeColors[index][field] = value;
+            if (field === 'time') {
+                this.sortTimeColors();
+            }
             this.saveTimeColors();
             this.renderTimeColors();
             this.updateBackground();
