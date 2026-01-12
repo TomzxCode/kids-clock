@@ -26,7 +26,8 @@ class KidsClockApp {
             { time: '09:00', color1: '#87CEEB', color2: '#4FC3F7', name: 'Morning' },
             { time: '12:00', color1: '#FFD700', color2: '#FFA500', name: 'Noon' },
             { time: '17:00', color1: '#FF6B6B', color2: '#EE5A6F', name: 'Evening' },
-            { time: '20:00', color1: '#667eea', color2: '#764ba2', name: 'Night' }
+            { time: '19:00', color1: '#667eea', color2: '#764ba2', name: 'Dusk' },
+            { time: '21:00', color1: '#000000', color2: '#1a1a2e', name: 'Night' }
         ];
         this.init();
     }
