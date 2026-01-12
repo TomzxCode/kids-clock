@@ -21,7 +21,7 @@
                 <!-- Digital Clock -->
                 <div id="digitalClock" class="clock-display">
                     <div class="time-display">
-                        <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
+                        <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span><span id="ampm"></span>
                     </div>
                     <div class="date-display" id="dateDisplay"></div>
                 </div>
@@ -190,6 +190,13 @@
                         </label>
                     </div>
 
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enable24Hour">
+                            Use 24-hour time format
+                        </label>
+                    </div>
+
                     <hr style="margin: 20px 0; border: 1px solid #ddd;">
 
                     <h3 style="color: #667eea; margin-bottom: 15px;">📅 Events</h3>
@@ -278,15 +285,6 @@
                     <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
                         The clock will announce the time at the top of each hour within this time range.
                     </p>
-
-                    <hr style="margin: 30px 0; border: 1px solid #ddd;">
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="enable24Hour">
-                            Use 24-hour time format
-                        </label>
-                    </div>
                 </div>
             </div>
         </div>

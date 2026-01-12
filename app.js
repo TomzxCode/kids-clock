@@ -55,9 +55,21 @@ class KidsClockApp {
         const now = new Date();
 
         // Update digital clock
-        const hours = String(now.getHours()).padStart(2, '0');
+        let hours = now.getHours();
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        // Format hours based on 24-hour setting
+        const ampmElement = document.getElementById('ampm');
+        if (this.settings.enable24Hour) {
+            hours = String(hours).padStart(2, '0');
+            ampmElement.textContent = '';
+        } else {
+            const period = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            hours = String(hours).padStart(2, '0');
+            ampmElement.textContent = ' ' + period;
+        }
 
         document.getElementById('hours').textContent = hours;
         document.getElementById('minutes').textContent = minutes;
