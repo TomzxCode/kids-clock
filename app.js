@@ -540,20 +540,10 @@ class KidsClockApp {
         const hours = now.getHours();
         const minutes = now.getMinutes();
 
-        // Format the time announcement
-        let announcement;
-        if (this.settings.enable24Hour) {
-            announcement = `It is now ${hours} hundred hours`;
-        } else {
-            const period = hours >= 12 ? 'PM' : 'AM';
-            const displayHours = hours % 12 || 12;
-
-            if (minutes === 0) {
-                announcement = `It is now ${displayHours} o'clock ${period}`;
-            } else {
-                announcement = `It is now ${displayHours} ${minutes} ${period}`;
-            }
-        }
+        // Format the time announcement in 24-hour format
+        const hoursStr = String(hours).padStart(2, '0');
+        const minutesStr = String(minutes).padStart(2, '0');
+        const announcement = `It is now ${hoursStr}:${minutesStr}`;
 
         console.log('Hourly announcement:', announcement);
 
