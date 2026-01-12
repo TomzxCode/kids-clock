@@ -375,6 +375,62 @@ body {
     display: none;
 }
 
+/* Recurrence Options */
+.recurrence-options.hidden {
+    display: none;
+}
+
+.recurrence-options {
+    margin-top: 10px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+}
+
+.days-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.days-selector label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 12px;
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.days-selector label:hover {
+    background: #f0f0f0;
+}
+
+.days-selector input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.days-selector input[type="checkbox"]:checked + span {
+    font-weight: bold;
+}
+
+.interval-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.interval-inputs label {
+    font-weight: bold;
+    color: #667eea;
+}
+
 .modal-actions {
     display: flex;
     gap: 15px;

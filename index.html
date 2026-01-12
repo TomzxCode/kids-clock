@@ -205,10 +205,54 @@
                     </div>
 
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="repeatDaily">
-                            Repeat daily
-                        </label>
+                        <label for="recurrenceType">Recurrence:</label>
+                        <select id="recurrenceType" class="input-field" onchange="app.handleRecurrenceTypeChange()">
+                            <option value="none">One-time event</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly (specific day)</option>
+                            <option value="yearly">Yearly (specific date)</option>
+                            <option value="interval">Custom interval</option>
+                        </select>
+                    </div>
+
+                    <!-- Weekly recurrence options -->
+                    <div id="weeklyRecurrenceOptions" class="recurrence-options hidden">
+                        <label>Select day(s) of the week:</label>
+                        <div class="days-selector">
+                            <label><input type="checkbox" name="weekday" value="0"> Sun</label>
+                            <label><input type="checkbox" name="weekday" value="1"> Mon</label>
+                            <label><input type="checkbox" name="weekday" value="2"> Tue</label>
+                            <label><input type="checkbox" name="weekday" value="3"> Wed</label>
+                            <label><input type="checkbox" name="weekday" value="4"> Thu</label>
+                            <label><input type="checkbox" name="weekday" value="5"> Fri</label>
+                            <label><input type="checkbox" name="weekday" value="6"> Sat</label>
+                        </div>
+                    </div>
+
+                    <!-- Yearly recurrence options -->
+                    <div id="yearlyRecurrenceOptions" class="recurrence-options hidden">
+                        <label for="yearlyDate">Select the date for yearly recurrence:</label>
+                        <input type="date" id="yearlyDate" class="input-field">
+                        <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                            The event will trigger every year on this date at the specified time.
+                        </p>
+                    </div>
+
+                    <!-- Interval recurrence options -->
+                    <div id="intervalRecurrenceOptions" class="recurrence-options hidden">
+                        <div class="interval-inputs">
+                            <label>Repeat every:</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="intervalValue" class="input-field" min="1" max="365" value="1" style="flex: 1;">
+                                <select id="intervalUnit" class="input-field" style="flex: 1;">
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                    <option value="weeks">Weeks</option>
+                                    <option value="years">Years</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="modal-actions">

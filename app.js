@@ -43,6 +43,8 @@ class KidsClockApp {
             { time: '21:00', color1: '#000000', color2: '#1a1a2e', name: 'Night' },
             { time: '05:00', color1: '#000000', color2: '#1a1a2e', name: 'Night' }
         ];
+        // Event recurrence state tracking
+        this.eventLastTriggered = {}; // Map: eventId -> last triggered timestamp
         this.init();
     }
 
@@ -422,11 +424,33 @@ class KidsClockApp {
             if (event) {
                 document.getElementById('eventTime').value = event.time;
                 document.getElementById('eventName').value = event.name;
-                document.getElementById('repeatDaily').checked = event.repeatDaily;
+
+                // Load all content fields
                 document.getElementById('announcementText').value = event.message || '';
                 document.getElementById('pictureUrl').value = event.pictureUrl || '';
                 document.getElementById('audioUrl').value = event.audioUrl || '';
                 selectedVoice = event.voice || '';
+
+                // Handle recurrence
+                const recurrence = event.recurrence || { type: 'none' };
+                document.getElementById('recurrenceType').value = recurrence.type;
+
+                if (recurrence.type === 'weekly' && recurrence.days) {
+                    // Set the weekday checkboxes
+                    document.querySelectorAll('input[name="weekday"]').forEach(cb => {
+                        cb.checked = recurrence.days.includes(parseInt(cb.value));
+                    });
+                } else if (recurrence.type === 'interval') {
+                    document.getElementById('intervalValue').value = recurrence.intervalValue || 1;
+                    document.getElementById('intervalUnit').value = recurrence.intervalUnit || 'days';
+                } else if (recurrence.type === 'yearly' && recurrence.month && recurrence.day) {
+                    // Format the date as YYYY-MM-DD (year doesn't matter for yearly recurrence)
+                    const month = String(recurrence.month).padStart(2, '0');
+                    const day = String(recurrence.day).padStart(2, '0');
+                    document.getElementById('yearlyDate').value = `2000-${month}-${day}`;
+                }
+
+                this.handleRecurrenceTypeChange();
             }
         } else {
             modalTitle.textContent = 'Create New Event';
@@ -454,7 +478,177 @@ class KidsClockApp {
         document.getElementById('audioUrl').value = '';
         document.getElementById('pictureUpload').value = '';
         document.getElementById('audioUpload').value = '';
-        document.getElementById('repeatDaily').checked = false;
+        document.getElementById('recurrenceType').value = 'none';
+        document.getElementById('intervalValue').value = '1';
+        document.getElementById('intervalUnit').value = 'days';
+        document.getElementById('yearlyDate').value = '';
+        // Reset weekday checkboxes
+        document.querySelectorAll('input[name="weekday"]').forEach(cb => cb.checked = false);
+        this.handleRecurrenceTypeChange();
+    }
+
+    // Recurrence UI handling
+    handleRecurrenceTypeChange() {
+        const recurrenceType = document.getElementById('recurrenceType').value;
+        const weeklyOptions = document.getElementById('weeklyRecurrenceOptions');
+        const yearlyOptions = document.getElementById('yearlyRecurrenceOptions');
+        const intervalOptions = document.getElementById('intervalRecurrenceOptions');
+
+        weeklyOptions.classList.add('hidden');
+        yearlyOptions.classList.add('hidden');
+        intervalOptions.classList.add('hidden');
+
+        if (recurrenceType === 'weekly') {
+            weeklyOptions.classList.remove('hidden');
+        } else if (recurrenceType === 'yearly') {
+            yearlyOptions.classList.remove('hidden');
+        } else if (recurrenceType === 'interval') {
+            intervalOptions.classList.remove('hidden');
+        }
+    }
+
+    // Recurrence calculation methods
+    shouldTriggerEvent(event, now) {
+        if (!event.enabled) return false;
+
+        const recurrence = event.recurrence || { type: 'none' };
+        const eventId = event.id;
+        const lastTriggered = this.eventLastTriggered[eventId] || 0;
+
+        // Parse event time
+        const [eventHour, eventMinute] = event.time.split(':').map(Number);
+        const eventTime = new Date(now);
+        eventTime.setHours(eventHour, eventMinute, 0, 0);
+
+        // If event time is in the future, don't trigger
+        if (eventTime > now) return false;
+
+        // Check if enough time has passed since last trigger
+        const timeSinceLastTrigger = now.getTime() - lastTriggered;
+
+        switch (recurrence.type) {
+            case 'none':
+                // One-time event: trigger if never triggered before
+                return lastTriggered === 0;
+
+            case 'daily':
+                // Daily: trigger if at least 24 hours have passed
+                return timeSinceLastTrigger >= 24 * 60 * 60 * 1000;
+
+            case 'weekly':
+                // Weekly on specific day(s)
+                if (!recurrence.days || recurrence.days.length === 0) return false;
+                const currentDayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+                if (!recurrence.days.includes(currentDayOfWeek)) return false;
+
+                // Check if at least 7 days have passed since last trigger
+                return timeSinceLastTrigger >= 7 * 24 * 60 * 60 * 1000;
+
+            case 'yearly':
+                // Yearly: check if today matches the specified date and enough time has passed
+                if (!recurrence.month || !recurrence.day) return false;
+
+                const currentMonth = now.getMonth() + 1; // 1-12
+                const currentDay = now.getDate();
+
+                // Check if today is the specified date
+                if (currentMonth !== recurrence.month || currentDay !== recurrence.day) {
+                    return false;
+                }
+
+                // Check if at least 365 days have passed since last trigger
+                return timeSinceLastTrigger >= 365 * 24 * 60 * 60 * 1000;
+
+            case 'interval':
+                // Custom interval
+                const intervalValue = recurrence.intervalValue || 1;
+                const intervalUnit = recurrence.intervalUnit || 'days';
+
+                let intervalMs;
+                switch (intervalUnit) {
+                    case 'minutes':
+                        intervalMs = intervalValue * 60 * 1000;
+                        break;
+                    case 'hours':
+                        intervalMs = intervalValue * 60 * 60 * 1000;
+                        break;
+                    case 'days':
+                        intervalMs = intervalValue * 24 * 60 * 60 * 1000;
+                        break;
+                    case 'weeks':
+                        intervalMs = intervalValue * 7 * 24 * 60 * 60 * 1000;
+                        break;
+                    case 'years':
+                        intervalMs = intervalValue * 365 * 24 * 60 * 60 * 1000;
+                        break;
+                    default:
+                        intervalMs = 24 * 60 * 60 * 1000;
+                }
+
+                return timeSinceLastTrigger >= intervalMs;
+
+            default:
+                // Legacy repeatDaily support
+                if (event.repeatDaily) {
+                    return timeSinceLastTrigger >= 24 * 60 * 60 * 1000;
+                }
+                return lastTriggered === 0;
+        }
+    }
+
+    getRecurrenceDescription(recurrence) {
+        if (!recurrence || recurrence.type === 'none') {
+            return 'One-time event';
+        }
+
+        switch (recurrence.type) {
+            case 'daily':
+                return 'Repeats daily';
+            case 'weekly':
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                if (recurrence.days && recurrence.days.length > 0) {
+                    const days = recurrence.days.map(d => dayNames[d]).join(', ');
+                    return `Repeats on ${days}`;
+                }
+                return 'Repeats weekly';
+            case 'yearly':
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                if (recurrence.month && recurrence.day) {
+                    return `Repeats yearly on ${monthNames[recurrence.month - 1]} ${recurrence.day}`;
+                }
+                return 'Repeats yearly';
+            case 'interval':
+                const value = recurrence.intervalValue || 1;
+                const unit = recurrence.intervalUnit || 'days';
+                if (value === 1) {
+                    return `Repeats every ${unit.slice(0, -1)}`; // Remove 's' for singular
+                }
+                return `Repeats every ${value} ${unit}`;
+            default:
+                return 'Recurring event';
+        }
+    }
+
+    showEventFields(type) {
+        const announcementFields = document.getElementById('announcementFields');
+        const pictureFields = document.getElementById('pictureFields');
+        const audioFields = document.getElementById('audioFields');
+
+        announcementFields.classList.add('hidden');
+        pictureFields.classList.add('hidden');
+        audioFields.classList.add('hidden');
+
+        switch(type) {
+            case 'announcement':
+                announcementFields.classList.remove('hidden');
+                break;
+            case 'picture':
+                pictureFields.classList.remove('hidden');
+                break;
+            case 'audio':
+                audioFields.classList.remove('hidden');
+                break;
+        }
     }
 
     handleFileUpload(event, type) {
@@ -476,7 +670,6 @@ class KidsClockApp {
     saveEvent() {
         const time = document.getElementById('eventTime').value;
         const name = document.getElementById('eventName').value;
-        const repeatDaily = document.getElementById('repeatDaily').checked;
         const message = document.getElementById('announcementText').value;
         const voice = document.getElementById('eventVoice').value;
         const pictureUrl = document.getElementById('pictureUrl').value;
@@ -487,9 +680,39 @@ class KidsClockApp {
             return;
         }
 
-        if (!message && !pictureUrl && !audioUrl) {
-            alert('Please add at least one of: Announcement, Picture, or Audio');
-            return;
+        // Build recurrence object
+        const recurrenceType = document.getElementById('recurrenceType').value;
+        let recurrence = { type: recurrenceType };
+
+        if (recurrenceType === 'weekly') {
+            const selectedDays = [];
+            document.querySelectorAll('input[name="weekday"]:checked').forEach(cb => {
+                selectedDays.push(parseInt(cb.value));
+            });
+            if (selectedDays.length === 0) {
+                alert('Please select at least one day of the week');
+                return;
+            }
+            recurrence.days = selectedDays;
+        } else if (recurrenceType === 'yearly') {
+            const yearlyDate = document.getElementById('yearlyDate').value;
+            if (!yearlyDate) {
+                alert('Please select a date for the yearly recurrence');
+                return;
+            }
+            // Parse the date (format: YYYY-MM-DD)
+            const dateParts = yearlyDate.split('-');
+            recurrence.month = parseInt(dateParts[1]); // Month (1-12)
+            recurrence.day = parseInt(dateParts[2]); // Day (1-31)
+        } else if (recurrenceType === 'interval') {
+            const intervalValue = parseInt(document.getElementById('intervalValue').value);
+            const intervalUnit = document.getElementById('intervalUnit').value;
+            if (!intervalValue || intervalValue < 1) {
+                alert('Please enter a valid interval value (minimum 1)');
+                return;
+            }
+            recurrence.intervalValue = intervalValue;
+            recurrence.intervalUnit = intervalUnit;
         }
 
         let event;
@@ -500,7 +723,7 @@ class KidsClockApp {
 
             event.time = time;
             event.name = name;
-            event.repeatDaily = repeatDaily;
+            event.recurrence = recurrence;
             event.message = message;
             event.voice = voice;
             event.pictureUrl = pictureUrl;
@@ -512,7 +735,7 @@ class KidsClockApp {
                 id: this.getCurrentTimestamp(),
                 time,
                 name,
-                repeatDaily,
+                recurrence,
                 enabled: true,
                 message,
                 voice,
@@ -534,6 +757,9 @@ class KidsClockApp {
     deleteEvent(id) {
         if (confirm('Are you sure you want to delete this event?')) {
             this.events = this.events.filter(e => e.id !== id);
+            // Clean up last triggered time
+            delete this.eventLastTriggered[id];
+            this.saveEventLastTriggered();
             this.saveEvents();
             this.renderEvents();
         }
@@ -560,12 +786,14 @@ class KidsClockApp {
             if (event.audioUrl) emojis.push('🎵');
             const emojiStr = emojis.length > 0 ? emojis.join(' ') + ' ' : '';
 
+            const recurrenceDesc = this.getRecurrenceDescription(event.recurrence);
+
             return `
                 <div class="event-card">
                     <div class="event-info">
                         <div class="event-time">${event.time}</div>
                         <div class="event-name">${emojiStr}${event.name}</div>
-                        <div class="event-type">${event.repeatDaily ? 'Repeats daily' : 'One-time event'}</div>
+                        <div class="event-type">${recurrenceDesc}</div>
                     </div>
                     <div class="event-actions">
                         <button class="event-action-btn" onclick="app.editEvent(${event.id})" title="Edit">✏️</button>
@@ -602,7 +830,8 @@ class KidsClockApp {
         }
 
         this.events.forEach(event => {
-            if (event.enabled && event.time === currentTime) {
+            // Check if the event time matches current time AND if the event should trigger based on recurrence
+            if (event.enabled && event.time === currentTime && this.shouldTriggerEvent(event, now)) {
                 this.triggerEvent(event);
             }
         });
@@ -669,14 +898,19 @@ class KidsClockApp {
     triggerEvent(event) {
         console.log('Triggering event:', event);
 
+        // Record the last triggered time
+        this.eventLastTriggered[event.id] = Date.now();
+        this.saveEventLastTriggered();
+
         // Play a notification sound if supported
         this.playNotificationSound();
 
         // Show the event overlay
         this.showEventOverlay(event);
 
-        // If it's not a repeating event, disable it
-        if (!event.repeatDaily) {
+        // For one-time events, disable after triggering
+        const recurrence = event.recurrence || { type: 'none' };
+        if (recurrence.type === 'none') {
             event.enabled = false;
             this.saveEvents();
             this.renderEvents();
@@ -1043,6 +1277,10 @@ class KidsClockApp {
         localStorage.setItem('kidsClockEvents', JSON.stringify(this.events));
     }
 
+    saveEventLastTriggered() {
+        localStorage.setItem('kidsClockEventLastTriggered', JSON.stringify(this.eventLastTriggered));
+    }
+
     loadEvents() {
         const stored = localStorage.getItem('kidsClockEvents');
         if (stored) {
@@ -1052,15 +1290,21 @@ class KidsClockApp {
                 // Migrate old event format (with 'type' field) to new format
                 this.events = this.events.map(event => {
                     if (event.type) {
-                        // Old format - convert to new format
+                        // Old format - convert to new format with all fields on one event
                         const migrated = {
                             id: event.id,
                             time: event.time,
                             name: event.name,
-                            repeatDaily: event.repeatDaily,
-                            enabled: event.enabled !== undefined ? event.enabled : true
+                            enabled: event.enabled !== undefined ? event.enabled : true,
+                            recurrence: { type: 'none' }
                         };
 
+                        // Copy repeatDaily if exists and convert to recurrence
+                        if (event.repeatDaily !== undefined) {
+                            migrated.recurrence = event.repeatDaily ? { type: 'daily' } : { type: 'none' };
+                        }
+
+                        // Copy all content fields
                         if (event.type === 'announcement') {
                             migrated.message = event.message || '';
                             migrated.voice = event.voice || '';
@@ -1070,9 +1314,28 @@ class KidsClockApp {
                             migrated.audioUrl = event.audioUrl || '';
                         }
 
+                        // If the event had the old type format, it might have only one content field
+                        // But we want to support all fields on one event, so copy any that exist
+                        if (event.message) migrated.message = event.message;
+                        if (event.voice) migrated.voice = event.voice;
+                        if (event.pictureUrl) migrated.pictureUrl = event.pictureUrl;
+                        if (event.audioUrl) migrated.audioUrl = event.audioUrl;
+
                         delete migrated.type;
                         return migrated;
                     }
+
+                    // Migrate old repeatDaily to new recurrence format if needed
+                    if (event.repeatDaily !== undefined && !event.recurrence) {
+                        event.recurrence = event.repeatDaily ? { type: 'daily' } : { type: 'none' };
+                        delete event.repeatDaily;
+                    }
+
+                    // Initialize recurrence if missing
+                    if (!event.recurrence) {
+                        event.recurrence = { type: 'none' };
+                    }
+
                     return event;
                 });
 
@@ -1081,6 +1344,15 @@ class KidsClockApp {
             } catch (e) {
                 console.error('Error loading events:', e);
                 this.events = [];
+            }
+        }
+        // Load last triggered times
+        const triggeredStored = localStorage.getItem('kidsClockEventLastTriggered');
+        if (triggeredStored) {
+            try {
+                this.eventLastTriggered = JSON.parse(triggeredStored);
+            } catch (e) {
+                console.error('Error loading last triggered times:', e);
             }
         }
     }
