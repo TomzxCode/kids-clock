@@ -7,6 +7,16 @@ class KidsClockApp {
         this.editingEventId = null;
         this.checkInterval = null;
         this.backgroundInterval = null;
+
+        // Debug mode state
+        this.debugMode = {
+            enabled: false,
+            speed: 1,
+            simulatedTime: null,
+            lastRealTime: Date.now(),
+            lastSimulatedTime: Date.now()
+        };
+
         this.settings = {
             enableTTS: true,
             ttsVoice: '',
@@ -19,7 +29,9 @@ class KidsClockApp {
             hourlyAnnouncementStart: '08:00',
             hourlyAnnouncementEnd: '22:00',
             showSeconds: true,
-            showAnalogSeconds: true
+            showAnalogSeconds: true,
+            debugMode: false,
+            debugSpeed: 1
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -32,11 +44,112 @@ class KidsClockApp {
         this.init();
     }
 
+    // Time abstraction layer - returns current time (real or simulated)
+    getCurrentTime() {
+        if (!this.debugMode.enabled) {
+            return new Date();
+        }
+
+        const now = Date.now();
+        const realElapsed = now - this.debugMode.lastRealTime;
+        const simElapsed = realElapsed * this.debugMode.speed;
+        this.debugMode.simulatedTime = this.debugMode.lastSimulatedTime + simElapsed;
+        this.debugMode.lastRealTime = now;
+        this.debugMode.lastSimulatedTime = this.debugMode.simulatedTime;
+
+        return new Date(this.debugMode.simulatedTime);
+    }
+
+    // For getting timestamp (like Date.now())
+    getCurrentTimestamp() {
+        if (!this.debugMode.enabled) {
+            return Date.now();
+        }
+        return Math.floor(this.debugMode.simulatedTime);
+    }
+
+    // Set debug mode state
+    setDebugMode(enabled, speed = 1) {
+        this.debugMode.enabled = enabled;
+        this.debugMode.speed = speed;
+
+        if (enabled) {
+            // Initialize simulated time from current real time if not already set
+            if (!this.debugMode.simulatedTime) {
+                this.debugMode.simulatedTime = Date.now();
+                this.debugMode.lastSimulatedTime = this.debugMode.simulatedTime;
+            }
+            this.debugMode.lastRealTime = Date.now();
+
+            // Restart intervals with adjusted speed
+            this.restartIntervals();
+        } else {
+            // Disable debug mode and reset
+            this.debugMode.simulatedTime = null;
+            this.restartIntervals();
+        }
+
+        // Update UI to show debug status
+        this.updateDebugIndicator();
+    }
+
+    // Restart intervals based on debug mode
+    restartIntervals() {
+        // Clear existing intervals
+        clearInterval(this.clockInterval);
+        clearInterval(this.checkInterval);
+        clearInterval(this.backgroundInterval);
+
+        // Calculate interval based on speed
+        const clockInterval = this.debugMode.enabled ? Math.max(100, Math.floor(1000 / this.debugMode.speed)) : 1000;
+        const checkInterval = this.debugMode.enabled ? Math.max(100, Math.floor(1000 / this.debugMode.speed)) : 1000;
+        const bgInterval = this.debugMode.enabled ? Math.max(100, Math.floor(60000 / this.debugMode.speed)) : 60000;
+
+        // Restart intervals
+        this.startClock();
+        this.startEventChecker();
+        this.startBackgroundUpdater();
+    }
+
+    // Update debug indicator on screen
+    updateDebugIndicator() {
+        let indicator = document.getElementById('debugIndicator');
+        if (this.debugMode.enabled) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'debugIndicator';
+                indicator.style.cssText = `
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    background: rgba(255, 0, 0, 0.8);
+                    color: white;
+                    padding: 10px 15px;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    z-index: 1000;
+                    font-size: 14px;
+                `;
+                document.body.appendChild(indicator);
+            }
+            indicator.textContent = `DEBUG MODE (${this.debugMode.speed}x speed)`;
+            indicator.style.display = 'block';
+        } else {
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+    }
+
     init() {
         this.loadEvents();
         this.loadSettings();
         this.loadTimeColors();
         this.setupEventListeners();
+        // Restore debug mode state from settings
+        if (this.settings.debugMode) {
+            this.setDebugMode(true, this.settings.debugSpeed);
+        }
         this.startClock();
         this.startEventChecker();
         this.startBackgroundUpdater();
@@ -48,11 +161,13 @@ class KidsClockApp {
     // Clock Functions
     startClock() {
         this.updateClock();
-        setInterval(() => this.updateClock(), 1000);
+        // Use dynamic interval based on debug mode
+        const interval = this.debugMode.enabled ? Math.max(100, Math.floor(1000 / this.debugMode.speed)) : 1000;
+        this.clockInterval = setInterval(() => this.updateClock(), interval);
     }
 
     updateClock() {
-        const now = new Date();
+        const now = this.getCurrentTime();
 
         // Update digital clock
         let hours = now.getHours();
@@ -240,6 +355,14 @@ class KidsClockApp {
         document.getElementById('addTimeColorBtn').addEventListener('click', () => {
             this.addTimeColorPeriod();
         });
+
+        // Debug mode controls
+        document.getElementById('applyDebugMode').addEventListener('click', () => {
+            const enabled = document.getElementById('debugModeEnabled').checked;
+            const speed = parseFloat(document.getElementById('debugSpeed').value) || 1;
+            this.setDebugMode(enabled, speed);
+            this.saveCurrentSettings();
+        });
     }
 
     updateClockVisibility() {
@@ -372,7 +495,7 @@ class KidsClockApp {
         } else {
             // Create new event
             event = {
-                id: Date.now(),
+                id: this.getCurrentTimestamp(),
                 time,
                 name,
                 repeatDaily,
@@ -441,14 +564,15 @@ class KidsClockApp {
 
     // Event Checking
     startEventChecker() {
-        // Check every second
+        // Use dynamic interval based on debug mode
+        const interval = this.debugMode.enabled ? Math.max(100, Math.floor(1000 / this.debugMode.speed)) : 1000;
         this.checkInterval = setInterval(() => {
             this.checkEvents();
-        }, 1000);
+        }, interval);
     }
 
     checkEvents() {
-        const now = new Date();
+        const now = this.getCurrentTime();
         const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         const currentSeconds = now.getSeconds();
         const currentMinutes = now.getMinutes();
@@ -743,7 +867,7 @@ class KidsClockApp {
     }
 
     testHourlyAnnouncement() {
-        const now = new Date();
+        const now = this.getCurrentTime();
         this.announceTime(now);
     }
 
@@ -828,6 +952,10 @@ class KidsClockApp {
         document.getElementById('hourlyAnnouncementStart').value = this.settings.hourlyAnnouncementStart;
         document.getElementById('hourlyAnnouncementEnd').value = this.settings.hourlyAnnouncementEnd;
 
+        // Load debug mode settings
+        document.getElementById('debugModeEnabled').checked = this.settings.debugMode;
+        document.getElementById('debugSpeed').value = this.settings.debugSpeed;
+
         document.getElementById('ttsRateValue').textContent = this.settings.ttsRate + 'x';
         document.getElementById('ttsPitchValue').textContent = this.settings.ttsPitch + 'x';
 
@@ -855,6 +983,8 @@ class KidsClockApp {
         this.settings.enableHourlyAnnouncement = document.getElementById('enableHourlyAnnouncement').checked;
         this.settings.hourlyAnnouncementStart = document.getElementById('hourlyAnnouncementStart').value;
         this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
+        this.settings.debugMode = document.getElementById('debugModeEnabled').checked;
+        this.settings.debugSpeed = parseFloat(document.getElementById('debugSpeed').value) || 1;
 
         this.saveSettings();
     }
@@ -1007,14 +1137,15 @@ class KidsClockApp {
         // Update immediately
         this.updateBackground();
 
-        // Update every minute
+        // Use dynamic interval based on debug mode
+        const interval = this.debugMode.enabled ? Math.max(100, Math.floor(60000 / this.debugMode.speed)) : 60000;
         this.backgroundInterval = setInterval(() => {
             this.updateBackground();
-        }, 60000);
+        }, interval);
     }
 
     updateBackground() {
-        const now = new Date();
+        const now = this.getCurrentTime();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
         // Sort time colors by time
