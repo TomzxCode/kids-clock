@@ -285,9 +285,9 @@ body {
 .modal-content {
     background: white;
     border-radius: 0;
-    width: 90%;
+    width: 100%;
     max-width: 600px;
-    max-height: 90vh;
+    max-height: 100vh;
     overflow: hidden;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
     animation: scaleIn 0.3s ease;
@@ -675,7 +675,7 @@ body {
     }
 
     .modal-content {
-        width: 95%;
+        width: 100%;
     }
 
     .announcement-content h2 {
