@@ -92,9 +92,10 @@ class KidsClockApp {
         const minutes = date.getMinutes();
         const seconds = date.getSeconds();
 
-        const hourAngle = (hours * 30) + (minutes * 0.5) - 90;
-        const minuteAngle = (minutes * 6) - 90;
-        const secondAngle = (seconds * 6) - 90;
+        // Calculate angles (hands start pointing at 12 o'clock)
+        const hourAngle = (hours * 30) + (minutes * 0.5);
+        const minuteAngle = (minutes * 6);
+        const secondAngle = (seconds * 6);
 
         const hourHand = document.getElementById('hourHand');
         const minuteHand = document.getElementById('minuteHand');
