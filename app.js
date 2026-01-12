@@ -1178,7 +1178,11 @@ class KidsClockApp {
         }
 
         const totalDuration = nextMinutes - currentMinutes_;
-        const elapsed = currentMinutes - currentMinutes_;
+        let elapsed = currentMinutes - currentMinutes_;
+        // Handle current time before first period (wrapped from previous day)
+        if (elapsed < 0) {
+            elapsed += 24 * 60;
+        }
         const progress = Math.max(0, Math.min(1, elapsed / totalDuration));
 
         // Interpolate colors
