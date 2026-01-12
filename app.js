@@ -160,11 +160,6 @@ class KidsClockApp {
             this.saveEvent();
         });
 
-        // Event type change
-        document.getElementById('eventType').addEventListener('change', (e) => {
-            this.showEventFields(e.target.value);
-        });
-
         // Overlay close
         document.getElementById('closeOverlay').addEventListener('click', () => {
             this.closeOverlay();
@@ -288,22 +283,13 @@ class KidsClockApp {
             modalTitle.textContent = 'Edit Event';
             const event = this.events.find(e => e.id === eventId);
             if (event) {
-                document.getElementById('eventType').value = event.type;
                 document.getElementById('eventTime').value = event.time;
                 document.getElementById('eventName').value = event.name;
                 document.getElementById('repeatDaily').checked = event.repeatDaily;
-
-                // Load type-specific data
-                if (event.type === 'announcement') {
-                    document.getElementById('announcementText').value = event.message || '';
-                    selectedVoice = event.voice || '';
-                } else if (event.type === 'picture') {
-                    document.getElementById('pictureUrl').value = event.pictureUrl || '';
-                } else if (event.type === 'audio') {
-                    document.getElementById('audioUrl').value = event.audioUrl || '';
-                }
-
-                this.showEventFields(event.type);
+                document.getElementById('announcementText').value = event.message || '';
+                document.getElementById('pictureUrl').value = event.pictureUrl || '';
+                document.getElementById('audioUrl').value = event.audioUrl || '';
+                selectedVoice = event.voice || '';
             }
         } else {
             modalTitle.textContent = 'Create New Event';
@@ -323,7 +309,6 @@ class KidsClockApp {
     }
 
     resetForm() {
-        document.getElementById('eventType').value = 'announcement';
         document.getElementById('eventTime').value = '';
         document.getElementById('eventName').value = '';
         document.getElementById('announcementText').value = '';
@@ -333,29 +318,6 @@ class KidsClockApp {
         document.getElementById('pictureUpload').value = '';
         document.getElementById('audioUpload').value = '';
         document.getElementById('repeatDaily').checked = false;
-        this.showEventFields('announcement');
-    }
-
-    showEventFields(type) {
-        const announcementFields = document.getElementById('announcementFields');
-        const pictureFields = document.getElementById('pictureFields');
-        const audioFields = document.getElementById('audioFields');
-
-        announcementFields.classList.add('hidden');
-        pictureFields.classList.add('hidden');
-        audioFields.classList.add('hidden');
-
-        switch(type) {
-            case 'announcement':
-                announcementFields.classList.remove('hidden');
-                break;
-            case 'picture':
-                pictureFields.classList.remove('hidden');
-                break;
-            case 'audio':
-                audioFields.classList.remove('hidden');
-                break;
-        }
     }
 
     handleFileUpload(event, type) {
@@ -375,13 +337,21 @@ class KidsClockApp {
 
     // Event Management
     saveEvent() {
-        const type = document.getElementById('eventType').value;
         const time = document.getElementById('eventTime').value;
         const name = document.getElementById('eventName').value;
         const repeatDaily = document.getElementById('repeatDaily').checked;
+        const message = document.getElementById('announcementText').value;
+        const voice = document.getElementById('eventVoice').value;
+        const pictureUrl = document.getElementById('pictureUrl').value;
+        const audioUrl = document.getElementById('audioUrl').value;
 
         if (!time || !name) {
             alert('Please fill in the required fields: Event Name and Time');
+            return;
+        }
+
+        if (!message && !pictureUrl && !audioUrl) {
+            alert('Please add at least one of: Announcement, Picture, or Audio');
             return;
         }
 
@@ -391,52 +361,28 @@ class KidsClockApp {
             event = this.events.find(e => e.id === this.editingEventId);
             if (!event) return;
 
-            event.type = type;
             event.time = time;
             event.name = name;
             event.repeatDaily = repeatDaily;
+            event.message = message;
+            event.voice = voice;
+            event.pictureUrl = pictureUrl;
+            event.audioUrl = audioUrl;
             event.enabled = true; // Re-enable in case it was disabled
         } else {
             // Create new event
             event = {
                 id: Date.now(),
-                type,
                 time,
                 name,
                 repeatDaily,
-                enabled: true
+                enabled: true,
+                message,
+                voice,
+                pictureUrl,
+                audioUrl
             };
             this.events.push(event);
-        }
-
-        // Add type-specific data
-        switch(type) {
-            case 'announcement':
-                event.message = document.getElementById('announcementText').value;
-                event.voice = document.getElementById('eventVoice').value;
-                delete event.pictureUrl;
-                delete event.audioUrl;
-                break;
-            case 'picture':
-                const pictureUrl = document.getElementById('pictureUrl').value;
-                if (!pictureUrl) {
-                    alert('Please provide a picture URL or upload an image');
-                    return;
-                }
-                event.pictureUrl = pictureUrl;
-                delete event.message;
-                delete event.audioUrl;
-                break;
-            case 'audio':
-                const audioUrl = document.getElementById('audioUrl').value;
-                if (!audioUrl) {
-                    alert('Please provide an audio URL or upload an audio file');
-                    return;
-                }
-                event.audioUrl = audioUrl;
-                delete event.message;
-                delete event.pictureUrl;
-                break;
         }
 
         this.saveEvents();
@@ -470,17 +416,18 @@ class KidsClockApp {
         });
 
         eventsList.innerHTML = sortedEvents.map(event => {
-            const typeEmojis = {
-                announcement: '📢',
-                picture: '🖼️',
-                audio: '🎵'
-            };
+            // Build emoji list based on what the event has
+            const emojis = [];
+            if (event.message) emojis.push('📢');
+            if (event.pictureUrl) emojis.push('🖼️');
+            if (event.audioUrl) emojis.push('🎵');
+            const emojiStr = emojis.length > 0 ? emojis.join(' ') + ' ' : '';
 
             return `
                 <div class="event-card">
                     <div class="event-info">
                         <div class="event-time">${event.time}</div>
-                        <div class="event-name">${typeEmojis[event.type]} ${event.name}</div>
+                        <div class="event-name">${emojiStr}${event.name}</div>
                         <div class="event-type">${event.repeatDaily ? 'Repeats daily' : 'One-time event'}</div>
                     </div>
                     <div class="event-actions">
@@ -621,44 +568,74 @@ class KidsClockApp {
         const overlay = document.getElementById('eventOverlay');
         const content = document.getElementById('overlayContent');
 
-        let html = '';
+        // Build emoji list for the title
+        const emojis = [];
+        if (event.message) emojis.push('📢');
+        if (event.pictureUrl) emojis.push('🖼️');
+        if (event.audioUrl) emojis.push('🎵');
+        const emojiStr = emojis.length > 0 ? emojis.join(' ') + ' ' : '';
 
-        switch(event.type) {
-            case 'announcement':
-                html = `
-                    <div class="announcement-content">
-                        <h2>📢 ${event.name}</h2>
-                        <p>${event.message || ''}</p>
-                    </div>
-                `;
-                // Speak the announcement using text-to-speech
-                if (this.settings.enableTTS && event.message) {
-                    this.speak(event.message, event.voice);
-                }
-                break;
-            case 'picture':
-                html = `
-                    <div class="picture-content">
-                        <h2>🖼️ ${event.name}</h2>
-                        <img src="${event.pictureUrl}" alt="${event.name}">
-                    </div>
-                `;
-                break;
-            case 'audio':
-                html = `
-                    <div class="audio-content">
-                        <h2>🎵 ${event.name}</h2>
-                        <audio controls autoplay>
-                            <source src="${event.audioUrl}">
-                            Your browser does not support the audio element.
-                        </audio>
-                    </div>
-                `;
-                break;
+        let html = `<h2>${emojiStr}${event.name}</h2>`;
+
+        // Add picture if present
+        if (event.pictureUrl) {
+            html += `<img src="${event.pictureUrl}" alt="${event.name}" style="max-width: 100%; border-radius: 12px; margin-top: 16px;">`;
+        }
+
+        // Add message text if present
+        if (event.message) {
+            html += `<p>${event.message}</p>`;
+        }
+
+        // Add audio player if present
+        if (event.audioUrl) {
+            html += `
+                <audio controls autoplay id="eventAudio">
+                    <source src="${event.audioUrl}">
+                    Your browser does not support the audio element.
+                </audio>
+            `;
         }
 
         content.innerHTML = html;
         overlay.classList.remove('hidden');
+
+        // Handle announcement + audio sequence
+        if (event.message && event.audioUrl && this.settings.enableTTS) {
+            // Speak announcement first, then start audio when speech ends
+            const audioElement = document.getElementById('eventAudio');
+            if (audioElement) {
+                audioElement.pause(); // Pause autoplay initially
+
+                const utterance = new SpeechSynthesisUtterance(event.message);
+                utterance.rate = this.settings.ttsRate;
+                utterance.pitch = this.settings.ttsPitch;
+
+                const voiceToUse = event.voice || this.settings.ttsVoice;
+                if (voiceToUse) {
+                    const voices = window.speechSynthesis.getVoices();
+                    const voice = voices.find(v => v.name === voiceToUse);
+                    if (voice) {
+                        utterance.voice = voice;
+                    }
+                }
+
+                utterance.onend = () => {
+                    // After speech ends, play the audio
+                    audioElement.play().catch(e => console.log('Audio autoplay failed:', e));
+                };
+
+                utterance.onerror = () => {
+                    // If speech fails, still try to play audio
+                    audioElement.play().catch(e => console.log('Audio autoplay failed:', e));
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+        } else if (event.message && this.settings.enableTTS) {
+            // Just speak the announcement
+            this.speak(event.message, event.voice);
+        }
     }
 
     closeOverlay() {
@@ -918,6 +895,36 @@ class KidsClockApp {
         if (stored) {
             try {
                 this.events = JSON.parse(stored);
+
+                // Migrate old event format (with 'type' field) to new format
+                this.events = this.events.map(event => {
+                    if (event.type) {
+                        // Old format - convert to new format
+                        const migrated = {
+                            id: event.id,
+                            time: event.time,
+                            name: event.name,
+                            repeatDaily: event.repeatDaily,
+                            enabled: event.enabled !== undefined ? event.enabled : true
+                        };
+
+                        if (event.type === 'announcement') {
+                            migrated.message = event.message || '';
+                            migrated.voice = event.voice || '';
+                        } else if (event.type === 'picture') {
+                            migrated.pictureUrl = event.pictureUrl || '';
+                        } else if (event.type === 'audio') {
+                            migrated.audioUrl = event.audioUrl || '';
+                        }
+
+                        delete migrated.type;
+                        return migrated;
+                    }
+                    return event;
+                });
+
+                // Save migrated events
+                this.saveEvents();
             } catch (e) {
                 console.error('Error loading events:', e);
                 this.events = [];

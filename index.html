@@ -79,15 +79,6 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="eventType">Event Type:</label>
-                        <select id="eventType" class="input-field">
-                            <option value="announcement">📢 Announcement</option>
-                            <option value="picture">🖼️ Picture</option>
-                            <option value="audio">🎵 Audio</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
                         <label for="eventTime">Time (24h format):</label>
                         <input type="time" id="eventTime" class="input-field" required>
                     </div>
@@ -97,36 +88,30 @@
                         <input type="text" id="eventName" class="input-field" placeholder="e.g., Snack Time!" required>
                     </div>
 
-                    <!-- Announcement specific -->
-                    <div id="announcementFields" class="event-specific-fields">
-                        <div class="form-group">
-                            <label for="announcementText">Announcement Message:</label>
-                            <textarea id="announcementText" class="input-field" rows="3" placeholder="Time to wash your hands!"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="eventVoice">Voice (optional - overrides default):</label>
-                            <select id="eventVoice" class="input-field">
-                                <option value="">Use Default Voice</option>
-                            </select>
-                        </div>
+                    <!-- Announcement -->
+                    <div class="form-group">
+                        <label for="announcementText">📢 Announcement Message (optional):</label>
+                        <textarea id="announcementText" class="input-field" rows="3" placeholder="Time to wash your hands!"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventVoice">Voice (optional - overrides default):</label>
+                        <select id="eventVoice" class="input-field">
+                            <option value="">Use Default Voice</option>
+                        </select>
                     </div>
 
-                    <!-- Picture specific -->
-                    <div id="pictureFields" class="event-specific-fields hidden">
-                        <div class="form-group">
-                            <label for="pictureUrl">Picture URL or upload:</label>
-                            <input type="file" id="pictureUpload" class="input-field" accept="image/*">
-                            <input type="text" id="pictureUrl" class="input-field" placeholder="Or paste image URL">
-                        </div>
+                    <!-- Picture -->
+                    <div class="form-group">
+                        <label for="pictureUrl">🖼️ Picture URL or upload (optional):</label>
+                        <input type="file" id="pictureUpload" class="input-field" accept="image/*">
+                        <input type="text" id="pictureUrl" class="input-field" placeholder="Or paste image URL">
                     </div>
 
-                    <!-- Audio specific -->
-                    <div id="audioFields" class="event-specific-fields hidden">
-                        <div class="form-group">
-                            <label for="audioUrl">Audio URL or upload:</label>
-                            <input type="file" id="audioUpload" class="input-field" accept="audio/*">
-                            <input type="text" id="audioUrl" class="input-field" placeholder="Or paste audio URL">
-                        </div>
+                    <!-- Audio -->
+                    <div class="form-group">
+                        <label for="audioUrl">🎵 Audio URL or upload (optional):</label>
+                        <input type="file" id="audioUpload" class="input-field" accept="audio/*">
+                        <input type="text" id="audioUrl" class="input-field" placeholder="Or paste audio URL">
                     </div>
 
                     <div class="form-group">
