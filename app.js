@@ -151,6 +151,7 @@ class KidsClockApp {
         this.loadSettings();
         this.loadTimeColors();
         this.generateStars();
+        this.randomizeCarColors();
         this.setupEventListeners();
         // Restore debug mode state from settings
         if (this.settings.debugMode) {
@@ -1636,6 +1637,64 @@ class KidsClockApp {
             star.style.animationDuration = ((Math.random() * 2) + 1.5) + 's';
             starsContainer.appendChild(star);
         }
+    }
+
+    randomizeCarColors() {
+        // Day car colors - bright, cheerful colors
+        const dayColors = [
+            ['#FF6B6B', '#EE5A5A'], // Red
+            ['#4ECDC4', '#3DB8B0'], // Teal
+            ['#FFB347', '#FF9F1C'], // Orange
+            ['#95E1D3', '#7DD3C0'], // Mint
+            ['#F38181', '#E66767'], // Coral
+            ['#AA96DA', '#9980CC'], // Purple
+            ['#FCBAD3', '#F9A1C4'], // Pink
+            ['#FFFFD2', '#FFF8B0'], // Yellow
+            ['#A8E6CF', '#88D8B0'], // Sea Green
+            ['#FFD93D', '#F4C430'], // Golden
+        ];
+
+        // Night car colors - darker, more subdued colors
+        const nightColors = [
+            ['#8B0000', '#6B0000'], // Dark Red
+            ['#1a3a5a', '#0a2a4a'], // Dark Blue
+            ['#4a2a6a', '#3a1a5a'], // Purple
+            ['#2a4a3a', '#1a3a2a'], // Dark Green
+            ['#3a3a3a', '#2a2a2a'], // Gray
+            ['#4a2a2a', '#3a1a1a'], // Dark Brown
+            ['#2a2a4a', '#1a1a3a'], // Dark Navy
+            ['#3a3a2a', '#2a2a1a'], // Olive
+            ['#4a3a2a', '#3a2a1a'], // Brown
+            ['#2a3a4a', '#1a2a3a'], // Steel Blue
+        ];
+
+        // Apply colors to ALL day cars
+        const dayCars = document.querySelectorAll('.day-car');
+        dayCars.forEach(car => {
+            const colorPair = dayColors[Math.floor(Math.random() * dayColors.length)];
+            const carBody = car.querySelector('.car-body');
+            const carTop = car.querySelector('.car-top');
+            if (carBody) {
+                carBody.style.background = `linear-gradient(180deg, ${colorPair[0]} 0%, ${colorPair[1]} 100%)`;
+            }
+            if (carTop) {
+                carTop.style.background = `linear-gradient(180deg, ${colorPair[0]} 0%, ${colorPair[1]} 100%)`;
+            }
+        });
+
+        // Apply colors to ALL night cars
+        const nightCars = document.querySelectorAll('.night-car');
+        nightCars.forEach(car => {
+            const colorPair = nightColors[Math.floor(Math.random() * nightColors.length)];
+            const carBody = car.querySelector('.car-body');
+            const carTop = car.querySelector('.car-top');
+            if (carBody) {
+                carBody.style.background = `linear-gradient(180deg, ${colorPair[0]} 0%, ${colorPair[1]} 100%)`;
+            }
+            if (carTop) {
+                carTop.style.background = `linear-gradient(180deg, ${colorPair[0]} 0%, ${colorPair[1]} 100%)`;
+            }
+        });
     }
 
     applyBackgroundModeUI() {

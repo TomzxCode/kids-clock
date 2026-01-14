@@ -1518,6 +1518,92 @@ body {
     z-index: 20;
 }
 
+.day-car-1 {
+    animation-delay: 0s;
+}
+
+.day-car-2 {
+    animation-delay: -12s;
+    animation-duration: 42s;
+}
+
+.day-car-3 {
+    animation-delay: -24s;
+    animation-duration: 28s;
+}
+
+.day-car-4 {
+    animation-delay: -8s;
+    animation-duration: 38s;
+}
+
+.day-car-5 {
+    animation-delay: -20s;
+    animation-duration: 45s;
+}
+
+/* Reverse direction cars (right to left) */
+.day-car-reverse {
+    right: -150px;
+    left: auto;
+    animation-name: carDriveReverse;
+}
+
+.day-car-reverse .car-body {
+    transform: scaleX(-1);
+}
+
+.day-car-reverse .car-headlight {
+    right: -3px;
+    left: auto;
+    width: 8px;
+    height: 8px;
+}
+
+.day-car-reverse .car-taillight {
+    left: -2px;
+    right: auto;
+}
+
+.day-car-reverse .car-headlight-beam {
+    display: block;
+    right: -150px;
+    left: auto;
+    background: linear-gradient(270deg,
+        rgba(255, 255, 200, 0.4) 0%,
+        rgba(255, 255, 200, 0.15) 60%,
+        transparent 100%
+    );
+    clip-path: polygon(0% 23%, 100% 0%, 100% 100%, 0% 77%);
+    filter: blur(5px);
+}
+
+.day-car-reverse .car-taillight-cone {
+    display: block;
+    width: 60px;
+    height: 14px;
+    right: -60px;
+    left: auto;
+    top: 10px;
+    background: linear-gradient(90deg,
+        rgba(255, 68, 68, 0.7) 0%,
+        rgba(255, 68, 68, 0.2) 60%,
+        transparent 100%
+    );
+    clip-path: polygon(100% 29%, 0% 0%, 0% 100%, 100% 71%);
+    opacity: 0.8;
+    filter: blur(3px);
+}
+
+@keyframes carDriveReverse {
+    0% { transform: translateX(0) translateY(0); }
+    20% { transform: translateX(-20vw) translateY(2px); }
+    40% { transform: translateX(-40vw) translateY(-1px); }
+    60% { transform: translateX(-60vw) translateY(1px); }
+    80% { transform: translateX(-80vw) translateY(-2px); }
+    100% { transform: translateX(calc(-100vw - 200px)) translateY(0); }
+}
+
 .day-car .car-body {
     position: relative;
     width: 80px;
@@ -1615,10 +1701,11 @@ body {
 }
 
 @keyframes carDrive {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(30vw) translateY(-2px); }
-    50% { transform: translateX(60vw) translateY(2px); }
-    75% { transform: translateX(90vw) translateY(-1px); }
+    0% { transform: translateX(0) translateY(0); }
+    20% { transform: translateX(20vw) translateY(2px); }
+    40% { transform: translateX(40vw) translateY(-1px); }
+    60% { transform: translateX(60vw) translateY(1px); }
+    80% { transform: translateX(80vw) translateY(-2px); }
     100% { transform: translateX(calc(100vw + 200px)) translateY(0); }
 }
 
@@ -2341,6 +2428,81 @@ body {
     z-index: 20;
 }
 
+.night-car-1 {
+    animation-delay: 0s;
+}
+
+.night-car-2 {
+    animation-delay: -12s;
+    animation-duration: 42s;
+}
+
+.night-car-3 {
+    animation-delay: -24s;
+    animation-duration: 28s;
+}
+
+.night-car-4 {
+    animation-delay: -8s;
+    animation-duration: 38s;
+}
+
+.night-car-5 {
+    animation-delay: -20s;
+    animation-duration: 45s;
+}
+
+/* Reverse direction night cars (right to left) */
+.night-car-reverse {
+    right: -150px;
+    left: auto;
+    animation-name: carDriveReverse;
+}
+
+.night-car-reverse .car-body {
+    transform: scaleX(-1);
+}
+
+.night-car-reverse .car-headlight {
+    right: -4px;
+    left: auto;
+    width: 8px;
+    height: 8px;
+}
+
+.night-car-reverse .car-taillight {
+    left: -3px;
+    right: auto;
+}
+
+.night-car-reverse .car-headlight-beam {
+    right: -150px;
+    left: auto;
+    background: linear-gradient(270deg,
+        rgba(255, 255, 200, 0.8) 0%,
+        rgba(255, 255, 200, 0.3) 60%,
+        transparent 100%
+    );
+    clip-path: polygon(0% 23%, 100% 0%, 100% 100%, 0% 77%);
+}
+
+.night-car-reverse .car-taillight-cone {
+    display: block;
+    width: 60px;
+    height: 14px;
+    right: -60px;
+    left: auto;
+    top: 10px;
+    background: linear-gradient(90deg,
+        rgba(255, 51, 51, 0.7) 0%,
+        rgba(255, 51, 51, 0.2) 60%,
+        transparent 100%
+    );
+    clip-path: polygon(100% 29%, 0% 0%, 0% 100%, 100% 71%);
+    opacity: 0.8;
+    filter: blur(3px);
+}
+
 .night-car .car-body {
     position: relative;
     width: 80px;
@@ -2465,4 +2627,132 @@ body {
 @keyframes taillightGlow {
     0%, 100% { box-shadow: 0 0 15px rgba(255, 51, 51, 1), 0 0 30px rgba(255, 51, 51, 0.6); }
     50% { box-shadow: 0 0 20px rgba(255, 51, 51, 1), 0 0 40px rgba(255, 51, 51, 0.8); }
+}
+
+/* Car Style Variations */
+/* Sedan - slightly longer, sleeker */
+[data-car-style="sedan"] .car-body {
+    width: 90px;
+    height: 28px;
+    border-radius: 12px 12px 4px 4px;
+}
+
+[data-car-style="sedan"] .car-top {
+    width: 50px;
+    height: 18px;
+    border-radius: 10px 10px 0 0;
+    top: -16px;
+    left: 18px;
+}
+
+[data-car-style="sedan"] .car-window {
+    width: 18px;
+    height: 11px;
+    top: -13px;
+}
+
+[data-car-style="sedan"] .car-window-left {
+    left: 20px;
+}
+
+[data-car-style="sedan"] .car-window-right {
+    left: 42px;
+}
+
+[data-car-style="sedan"] .car-wheel {
+    width: 16px;
+    height: 16px;
+}
+
+[data-car-style="sedan"] .car-wheel-front {
+    left: 12px;
+}
+
+[data-car-style="sedan"] .car-wheel-back {
+    right: 12px;
+}
+
+/* Truck - boxier, taller */
+[data-car-style="truck"] .car-body {
+    width: 85px;
+    height: 35px;
+    border-radius: 6px 6px 4px 4px;
+}
+
+[data-car-style="truck"] .car-top {
+    width: 55px;
+    height: 25px;
+    border-radius: 4px 4px 0 0;
+    top: -23px;
+    left: 8px;
+}
+
+[data-car-style="truck"] .car-window {
+    width: 20px;
+    height: 14px;
+    top: -18px;
+}
+
+[data-car-style="truck"] .car-window-left {
+    left: 12px;
+}
+
+[data-car-style="truck"] .car-window-right {
+    left: 38px;
+}
+
+[data-car-style="truck"] .car-wheel {
+    width: 20px;
+    height: 20px;
+}
+
+[data-car-style="truck"] .car-wheel-front {
+    left: 8px;
+}
+
+[data-car-style="truck"] .car-wheel-back {
+    right: 8px;
+}
+
+/* Hatchback - compact, sporty */
+[data-car-style="hatchback"] .car-body {
+    width: 75px;
+    height: 28px;
+    border-radius: 8px 8px 12px 12px;
+}
+
+[data-car-style="hatchback"] .car-top {
+    width: 40px;
+    height: 22px;
+    border-radius: 6px 12px 0 0;
+    top: -20px;
+    left: 20px;
+}
+
+[data-car-style="hatchback"] .car-window {
+    width: 14px;
+    height: 10px;
+    border-radius: 2px;
+    top: -14px;
+}
+
+[data-car-style="hatchback"] .car-window-left {
+    left: 22px;
+}
+
+[data-car-style="hatchback"] .car-window-right {
+    left: 40px;
+}
+
+[data-car-style="hatchback"] .car-wheel {
+    width: 17px;
+    height: 17px;
+}
+
+[data-car-style="hatchback"] .car-wheel-front {
+    left: 10px;
+}
+
+[data-car-style="hatchback"] .car-wheel-back {
+    right: 10px;
 }
