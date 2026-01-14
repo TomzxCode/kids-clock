@@ -28,6 +28,7 @@ class KidsClockApp {
             enableHourlyAnnouncement: false,
             hourlyAnnouncementStart: '08:00',
             hourlyAnnouncementEnd: '22:00',
+            hourlyAnnouncementFormat: '',
             showSeconds: true,
             showAnalogSeconds: true,
             debugMode: false,
@@ -335,6 +336,10 @@ class KidsClockApp {
         });
 
         document.getElementById('hourlyAnnouncementEnd').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('hourlyAnnouncementFormat').addEventListener('input', () => {
             this.saveCurrentSettings();
         });
 
@@ -871,9 +876,22 @@ class KidsClockApp {
         const hours = now.getHours();
         const minutes = now.getMinutes();
 
+        // Format the time string for the placeholder
+        let timeString;
+        if (this.settings.enable24Hour) {
+            timeString = `${hours}:${minutes.toString().padStart(2, '0')}`;
+        } else {
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            timeString = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+        }
+
         // Format the time announcement
         let announcement;
-        if (this.settings.enable24Hour) {
+        if (this.settings.hourlyAnnouncementFormat && this.settings.hourlyAnnouncementFormat.includes('{time}')) {
+            // Use custom format with placeholder
+            announcement = this.settings.hourlyAnnouncementFormat.replace('{time}', timeString);
+        } else if (this.settings.enable24Hour) {
             announcement = `It is now ${hours} hundred hours`;
         } else {
             const period = hours >= 12 ? 'PM' : 'AM';
@@ -1199,6 +1217,7 @@ class KidsClockApp {
         document.getElementById('enableHourlyAnnouncement').checked = this.settings.enableHourlyAnnouncement;
         document.getElementById('hourlyAnnouncementStart').value = this.settings.hourlyAnnouncementStart;
         document.getElementById('hourlyAnnouncementEnd').value = this.settings.hourlyAnnouncementEnd;
+        document.getElementById('hourlyAnnouncementFormat').value = this.settings.hourlyAnnouncementFormat || '';
 
         // Load debug mode settings
         document.getElementById('debugModeEnabled').checked = this.settings.debugMode;
@@ -1240,6 +1259,7 @@ class KidsClockApp {
         this.settings.enableHourlyAnnouncement = document.getElementById('enableHourlyAnnouncement').checked;
         this.settings.hourlyAnnouncementStart = document.getElementById('hourlyAnnouncementStart').value;
         this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
+        this.settings.hourlyAnnouncementFormat = document.getElementById('hourlyAnnouncementFormat').value;
         this.settings.debugMode = document.getElementById('debugModeEnabled').checked;
         this.settings.debugSpeed = parseFloat(document.getElementById('debugSpeed').value) || 1;
 
