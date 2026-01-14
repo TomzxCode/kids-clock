@@ -1769,6 +1769,75 @@ body {
     50% { box-shadow: 0 0 60px rgba(255, 250, 205, 0.7), 0 0 100px rgba(255, 250, 205, 0.4); }
 }
 
+/* Night Planets - More prominent planets for the night sky */
+.night-planet {
+    position: absolute;
+    border-radius: 50%;
+    animation: nightPlanetFloat 150s linear infinite;
+}
+
+.night-planet-1 {
+    width: 45px;
+    height: 45px;
+    background: radial-gradient(circle at 30% 30%, #F5DEB3 0%, #DEB887 40%, #D2B48C 70%, #BC9B6A 100%);
+    top: 18%;
+    left: 25%;
+    box-shadow: 0 0 25px rgba(222, 184, 135, 0.6), inset -8px -8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.night-planet-1 .planet-rings {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+    border: 4px solid rgba(210, 180, 140, 0.6);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(210, 180, 140, 0.4);
+}
+
+.night-planet-1 .planet-rings::before {
+    content: '';
+    position: absolute;
+    width: 58px;
+    height: 58px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 3px solid rgba(189, 158, 118, 0.5);
+    border-radius: 50%;
+}
+
+.night-planet-2 {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 30% 30%, #CD853F 0%, #A0522D 50%, #8B4513 100%);
+    top: 28%;
+    left: 15%;
+    animation-delay: -50s;
+    box-shadow: 0 0 20px rgba(160, 82, 45, 0.5), inset -5px -5px 12px rgba(0, 0, 0, 0.4);
+}
+
+.night-planet-3 {
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle at 30% 30%, #87CEEB 0%, #4682B4 50%, #2F5F8F 100%);
+    top: 12%;
+    left: 8%;
+    animation-delay: -80s;
+    box-shadow: 0 0 15px rgba(70, 130, 180, 0.5), inset -4px -4px 8px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes nightPlanetFloat {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(15px, -10px); }
+    40% { transform: translate(25px, 5px); }
+    60% { transform: translate(10px, -15px); }
+    80% { transform: translate(-15px, 8px); }
+    100% { transform: translate(0, 0); }
+}
+
 .moon-crater {
     position: absolute;
     background: rgba(218, 165, 32, 0.3);
