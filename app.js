@@ -1,5 +1,118 @@
 // Kids Clock App - Main Application Logic
 
+// SunCalc - MIT license
+// https://github.com/mourner/suncalc
+// Simplified version with only sunrise/sunset functions
+var SunCalc = {};
+
+// shortcuts for easier to read formulas
+var PI = Math.PI,
+    rad = PI / 180,
+    dayMs = 1000 * 60 * 60 * 24,
+    J1970 = 2440588,
+    J2000 = 2451545;
+
+function toJulian(date) { return date.valueOf() / dayMs - 0.5 + J1970; }
+function fromJulian(j)  { return new Date((j + 0.5 - J1970) * dayMs); }
+function toDays(date)   { return toJulian(date) - J2000; }
+
+// general calculations for position
+
+var e = rad * 23.4397; // obliquity of the Earth
+
+function rightAscension(l, b) { return Math.atan2(Math.sin(l) * Math.cos(e) - Math.tan(b) * Math.sin(e), Math.cos(l)); }
+function declination(l, b)    { return Math.asin(Math.sin(b) * Math.cos(e) + Math.cos(b) * Math.sin(e) * Math.sin(l)); }
+function azimuth(H, phi, dec)  { return Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(dec) * Math.cos(phi)); }
+function altitude(H, phi, dec) { return Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H)); }
+function siderealTime(d, lw)   { return rad * (280.16 + 360.9856235 * d) - lw; }
+
+function astroRefraction(h) {
+    if (h < 0) h = 0; // the following formula works for positive altitudes only.
+    return 0.0002967 / Math.tan(h + 0.00312536 / (h + 0.08901179));
+}
+
+// general sun calculations
+
+function solarMeanAnomaly(d) { return rad * (357.5291 + 0.98560028 * d); }
+
+function eclipticLongitude(M) {
+    var C = rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)),
+        P = rad * 102.9372; // perihelion of the Earth
+    return M + C + P + PI;
+}
+
+function sunCoords(d) {
+    var M = solarMeanAnomaly(d);
+    var L = eclipticLongitude(M);
+    return { dec: declination(L, 0), ra: rightAscension(L, 0) };
+}
+
+// calculates sun position for a given date and latitude/longitude
+SunCalc.getPosition = function(date, lat, lng) {
+    var lw  = rad * -lng,
+        phi = rad * lat,
+        d   = toDays(date),
+        c   = sunCoords(d),
+        H   = siderealTime(d, lw) - c.ra;
+
+    return {
+        azimuth: azimuth(H, phi, c.dec),
+        altitude: altitude(H, phi, c.dec)
+    };
+};
+
+// sun times configuration (angle, morning name, evening name)
+var times = SunCalc.times = [
+    [-0.833, 'sunrise', 'sunset']
+];
+
+// add hours of taken times
+var J0 = 0.0009;
+
+function julianCycle(d, lw) { return Math.round(d - J0 - lw / (2 * PI)); }
+
+function approxTransit(Ht, lw, n) { return J0 + (Ht + lw) / (2 * PI) + n; }
+function solarTransitJ(ds, M, L)  { return J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L); }
+
+function hourAngle(h, phi, d) { return Math.acos((Math.sin(h) - Math.sin(phi) * Math.sin(d)) / (Math.cos(phi) * Math.cos(d))); }
+
+// returns set time for the given sun altitude
+function getSetJ(h, lw, phi, dec, n, M, L) {
+    var w = hourAngle(h, phi, dec),
+        a = approxTransit(w, lw, n);
+    return solarTransitJ(a, M, L);
+}
+
+// calculates sun times for a given date and latitude/longitude
+SunCalc.getTimes = function(date, lat, lng) {
+    var lw = rad * -lng,
+        phi = rad * lat,
+        d = toDays(date),
+        n = julianCycle(d, lw),
+        ds = approxTransit(0, lw, n),
+        M = solarMeanAnomaly(ds),
+        L = eclipticLongitude(M),
+        dec = declination(L, 0),
+        Jnoon = solarTransitJ(ds, M, L),
+
+        i, len, time, h0, Jset, Jrise;
+
+    var result = {};
+
+    for (i = 0, len = times.length; i < len; i += 1) {
+        time = times[i];
+        h0 = time[0] * rad;
+
+        Jset = getSetJ(h0, lw, phi, dec, n, M, L);
+        Jrise = Jnoon - (Jset - Jnoon);
+
+        result[time[1]] = fromJulian(Jrise);
+        result[time[2]] = fromJulian(Jset);
+    }
+
+    return result;
+};
+
 class KidsClockApp {
     constructor() {
         this.events = [];
@@ -34,7 +147,10 @@ class KidsClockApp {
             showAnalogSeconds: true,
             debugMode: false,
             debugSpeed: 1,
-            backgroundMode: 'gradient'
+            backgroundMode: 'gradient',
+            // Location for sunrise/sunset calculations (default: null = will try to detect)
+            latitude: null,
+            longitude: null
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -389,6 +505,31 @@ class KidsClockApp {
                 this.applyBackgroundMode();
                 this.updateBackground();
             });
+        });
+
+        // Location settings for sunrise/sunset
+        document.getElementById('detectLocationBtn').addEventListener('click', () => {
+            this.detectLocation();
+        });
+
+        document.getElementById('latitudeInput').addEventListener('change', (e) => {
+            const lat = parseFloat(e.target.value);
+            if (!isNaN(lat) && lat >= -90 && lat <= 90) {
+                this.settings.latitude = lat;
+                this.saveSettings();
+                this.updateSunTimesDisplay();
+                this.updateAnimatedBackground();
+            }
+        });
+
+        document.getElementById('longitudeInput').addEventListener('change', (e) => {
+            const lng = parseFloat(e.target.value);
+            if (!isNaN(lng) && lng >= -180 && lng <= 180) {
+                this.settings.longitude = lng;
+                this.saveSettings();
+                this.updateSunTimesDisplay();
+                this.updateAnimatedBackground();
+            }
         });
     }
 
@@ -1242,6 +1383,10 @@ class KidsClockApp {
 
         // Render events in settings
         this.renderEvents();
+
+        // Update location inputs and sunrise/sunset display
+        this.updateLocationInputs();
+        this.updateSunTimesDisplay();
     }
 
     closeSettings() {
@@ -1732,13 +1877,30 @@ class KidsClockApp {
         if (this.settings.backgroundMode !== 'animated') return;
 
         const now = this.getCurrentTime();
-        const hour = now.getHours();
         const dayBackground = document.getElementById('dayBackground');
         const nightBackground = document.getElementById('nightBackground');
 
-        // Daytime: 6:00 AM - 6:59 PM (06:00 - 18:59)
-        // Nighttime: 7:00 PM - 5:59 AM (19:00 - 05:59)
-        const isDaytime = hour >= 6 && hour < 19;
+        // Calculate sunrise/sunset times if location is available
+        let isDaytime;
+        if (this.settings.latitude !== null && this.settings.longitude !== null) {
+            const times = SunCalc.getTimes(now, this.settings.latitude, this.settings.longitude);
+            const sunrise = times.sunrise;
+            const sunset = times.sunset;
+
+            if (sunrise && sunset) {
+                // Use actual sunrise/sunset times with a buffer for dawn/dusk
+                // Consider it "daytime" from sunrise to sunset
+                isDaytime = now >= sunrise && now < sunset;
+            } else {
+                // Fallback to hardcoded values if calculation fails (polar regions)
+                isDaytime = now.getHours() >= 6 && now.getHours() < 19;
+            }
+        } else {
+            // No location set, try to get it
+            this.tryGetLocation();
+            // Fallback to hardcoded values until location is available
+            isDaytime = now.getHours() >= 6 && now.getHours() < 19;
+        }
 
         if (isDaytime) {
             dayBackground.style.opacity = '1';
@@ -1746,6 +1908,102 @@ class KidsClockApp {
         } else {
             dayBackground.style.opacity = '0';
             nightBackground.style.opacity = '1';
+        }
+    }
+
+    // Try to get user's location using Geolocation API
+    tryGetLocation() {
+        if ('geolocation' in navigator && this.settings.latitude === null) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    this.settings.latitude = position.coords.latitude;
+                    this.settings.longitude = position.coords.longitude;
+                    this.saveSettings();
+                },
+                (error) => {
+                    // Location access denied or unavailable - user will need to set manually
+                    console.log('Location access not available:', error.message);
+                }
+            );
+        }
+    }
+
+    // Detect location when user clicks the button
+    detectLocation() {
+        if (!('geolocation' in navigator)) {
+            alert('Geolocation is not supported by your browser. Please enter your coordinates manually.');
+            return;
+        }
+
+        const btn = document.getElementById('detectLocationBtn');
+        btn.textContent = '🔄 Detecting...';
+        btn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                this.settings.latitude = position.coords.latitude;
+                this.settings.longitude = position.coords.longitude;
+                this.saveSettings();
+                this.updateLocationInputs();
+                this.updateSunTimesDisplay();
+                this.updateAnimatedBackground();
+                btn.textContent = '📍 Auto-detect Location';
+                btn.disabled = false;
+            },
+            (error) => {
+                let errorMsg = 'Could not get your location. ';
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMsg += 'Please allow location access and try again.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMsg += 'Location information unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMsg += 'Location request timed out.';
+                        break;
+                    default:
+                        errorMsg += 'Please enter coordinates manually.';
+                }
+                alert(errorMsg);
+                btn.textContent = '📍 Auto-detect Location';
+                btn.disabled = false;
+            }
+        );
+    }
+
+    // Update location input fields from settings
+    updateLocationInputs() {
+        const latInput = document.getElementById('latitudeInput');
+        const lngInput = document.getElementById('longitudeInput');
+
+        if (this.settings.latitude !== null) {
+            latInput.value = this.settings.latitude;
+        }
+        if (this.settings.longitude !== null) {
+            lngInput.value = this.settings.longitude;
+        }
+    }
+
+    // Update the sunrise/sunset times display
+    updateSunTimesDisplay() {
+        const sunTimesText = document.getElementById('sunTimesText');
+
+        if (this.settings.latitude === null || this.settings.longitude === null) {
+            sunTimesText.textContent = 'Location not set. Enable location access or enter coordinates manually.';
+            return;
+        }
+
+        const today = new Date();
+        const times = SunCalc.getTimes(today, this.settings.latitude, this.settings.longitude);
+
+        if (times.sunrise && times.sunset) {
+            const formatTime = (date) => {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            };
+            sunTimesText.innerHTML = `🌅 Sunrise: <strong>${formatTime(times.sunrise)}</strong><br>🌇 Sunset: <strong>${formatTime(times.sunset)}</strong>`;
+        } else {
+            sunTimesText.textContent = 'Sunrise/sunset times not available (polar region or invalid coordinates).';
         }
     }
 }
