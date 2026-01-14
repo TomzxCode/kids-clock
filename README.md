@@ -53,7 +53,7 @@ Access via the gear icon (⚙️) in the header:
 
 ### 🌈 Child-Friendly Design
 - Bright, colorful gradients
-- Large, readable fonts (Comic Sans MS)
+- Large, readable fonts
 - Fun emoji icons throughout
 - Smooth animations and transitions
 - Responsive design for all devices
