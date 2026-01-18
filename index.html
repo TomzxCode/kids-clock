@@ -547,232 +547,241 @@
 
         <!-- Settings Panel -->
         <div id="settingsPanel" class="modal hidden">
-            <div class="modal-content">
+            <div class="modal-content settings-modal-content">
                 <div class="modal-header">
                     <h2>⚙️ Settings</h2>
                     <button class="close-btn" id="closeSettings">✖️</button>
                 </div>
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="general">🔧 General</button>
+                    <button class="settings-tab" data-tab="clock">⏰ Clock</button>
+                    <button class="settings-tab" data-tab="events">📅 Events</button>
+                    <button class="settings-tab" data-tab="background">🎨 Background</button>
+                    <button class="settings-tab" data-tab="voice">🎙️ Voice</button>
+                    <button class="settings-tab" data-tab="hourly">🕐 Hourly</button>
+                    <button class="settings-tab" data-tab="debug">🐛 Debug</button>
+                </div>
                 <div class="modal-body">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">🔧 General</h3>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="keepScreenAwake">
-                            Keep screen awake
-                        </label>
-                        <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                            Prevent the screen from turning off automatically. Useful for keeping the clock visible.
-                        </p>
-                    </div>
-
-                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
-
-                    <h3 style="color: #667eea; margin-bottom: 15px;">⏰ Clock Display</h3>
-
-                    <div class="form-group">
-                        <label>Clock Display:</label>
-                        <div style="margin-top: 10px;">
-                            <label style="display: block; margin-bottom: 8px;">
-                                <input type="checkbox" id="showDigitalClock" checked>
-                                Show digital clock
+                    <div class="settings-tab-content active" data-content="general">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="keepScreenAwake">
+                                Keep screen awake
                             </label>
-                            <label style="display: block; margin-bottom: 8px;">
-                                <input type="checkbox" id="showAnalogClock">
-                                Show analog clock
-                            </label>
+                            <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                                Prevent the screen from turning off automatically. Useful for keeping the clock visible.
+                            </p>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="showSeconds" checked>
-                            Show seconds on digital clock
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="showAnalogSeconds" checked>
-                            Show seconds on analog clock
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="enable24Hour">
-                            Use 24-hour time format
-                        </label>
-                    </div>
-
-                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
-
-                    <h3 style="color: #667eea; margin-bottom: 15px;">📅 Events</h3>
-
-                    <div class="form-group">
-                        <button id="addEventBtnSettings" class="btn-primary" style="width: 100%;">➕ Add New Event</button>
-                    </div>
-
-                    <div class="form-group">
-                        <div id="eventsListSettings" class="events-list-settings">
-                            <p class="no-events">No events scheduled yet!</p>
-                        </div>
-                    </div>
-
-                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
-
-                    <h3 style="color: #667eea; margin-bottom: 15px;">🎨 Background</h3>
-
-                    <div class="form-group">
-                        <label>Background Mode:</label>
-                        <div style="margin-top: 10px;">
-                            <label style="display: block; margin-bottom: 8px;">
-                                <input type="radio" name="backgroundMode" value="gradient" checked>
-                                Gradient Colors (smooth transitions)
-                            </label>
-                            <label style="display: block; margin-bottom: 8px;">
-                                <input type="radio" name="backgroundMode" value="animated">
-                                Animated Day/Night (scenes with animations)
-                            </label>
-                        </div>
-                    </div>
-
-                    <div id="gradientBackgroundSettings" class="form-group">
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                            Configure background colors for different times of day. Colors will transition smoothly.
-                        </p>
-                        <div id="timeColorsList"></div>
-                        <button id="addTimeColorBtn" class="btn-secondary" style="width: 100%; margin-top: 10px;">+ Add Time Period</button>
-                    </div>
-
-                    <div id="animatedBackgroundInfo" class="form-group hidden">
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                            Animated backgrounds automatically show a sunny day scene during daytime hours and a starry night scene during nighttime hours.
-                        </p>
-                        <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                            Day/night times are calculated based on your location using actual sunrise and sunset times.
-                        </p>
+                    <div class="settings-tab-content" data-content="clock">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">⏰ Clock Display</h3>
 
                         <div class="form-group">
-                            <label>📍 Location for Sunrise/Sunset:</label>
-                            <button id="detectLocationBtn" class="btn-secondary" style="width: 100%; margin-top: 5px;">📍 Auto-detect Location</button>
+                            <label>Clock Display:</label>
+                            <div style="margin-top: 10px;">
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="checkbox" id="showDigitalClock" checked>
+                                    Show digital clock
+                                </label>
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="checkbox" id="showAnalogClock">
+                                    Show analog clock
+                                </label>
+                            </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="latitudeInput" style="display: block; margin-bottom: 5px;">Latitude:</label>
-                            <input type="number" id="latitudeInput" class="input-field" placeholder="e.g., 40.7128" step="0.0001" min="-90" max="90">
+                            <label>
+                                <input type="checkbox" id="showSeconds" checked>
+                                Show seconds on digital clock
+                            </label>
                         </div>
 
                         <div class="form-group">
-                            <label for="longitudeInput" style="display: block; margin-bottom: 5px;">Longitude:</label>
-                            <input type="number" id="longitudeInput" class="input-field" placeholder="e.g., -74.0060" step="0.0001" min="-180" max="180">
+                            <label>
+                                <input type="checkbox" id="showAnalogSeconds" checked>
+                                Show seconds on analog clock
+                            </label>
                         </div>
 
-                        <div id="sunTimesDisplay" style="font-size: 0.85em; color: #666; margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 5px;">
-                            <span id="sunTimesText">Location not set. Enable location access or enter coordinates manually.</span>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enable24Hour">
+                                Use 24-hour time format
+                            </label>
                         </div>
                     </div>
 
-                    <hr style="margin: 20px 0; border: 1px solid #ddd;">
+                    <div class="settings-tab-content" data-content="events">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">📅 Events</h3>
 
-                    <h3 style="color: #667eea; margin-bottom: 15px;">🎙️ Text-to-Speech</h3>
+                        <div class="form-group">
+                            <button id="addEventBtnSettings" class="btn-primary" style="width: 100%;">➕ Add New Event</button>
+                        </div>
 
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="enableTTS" checked>
-                            Enable Text-to-Speech for announcements
-                        </label>
+                        <div class="form-group">
+                            <div id="eventsListSettings" class="events-list-settings">
+                                <p class="no-events">No events scheduled yet!</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="ttsVoice">Voice:</label>
-                        <select id="ttsVoice" class="input-field">
-                            <option value="">Default Voice</option>
-                        </select>
+                    <div class="settings-tab-content" data-content="background">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">🎨 Background</h3>
+
+                        <div class="form-group">
+                            <label>Background Mode:</label>
+                            <div style="margin-top: 10px;">
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="radio" name="backgroundMode" value="gradient" checked>
+                                    Gradient Colors (smooth transitions)
+                                </label>
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="radio" name="backgroundMode" value="animated">
+                                    Animated Day/Night (scenes with animations)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="gradientBackgroundSettings" class="form-group">
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                                Configure background colors for different times of day. Colors will transition smoothly.
+                            </p>
+                            <div id="timeColorsList"></div>
+                            <button id="addTimeColorBtn" class="btn-secondary" style="width: 100%; margin-top: 10px;">+ Add Time Period</button>
+                        </div>
+
+                        <div id="animatedBackgroundInfo" class="form-group hidden">
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                                Animated backgrounds automatically show a sunny day scene during daytime hours and a starry night scene during nighttime hours.
+                            </p>
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                                Day/night times are calculated based on your location using actual sunrise and sunset times.
+                            </p>
+
+                            <div class="form-group">
+                                <label>📍 Location for Sunrise/Sunset:</label>
+                                <button id="detectLocationBtn" class="btn-secondary" style="width: 100%; margin-top: 5px;">📍 Auto-detect Location</button>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="latitudeInput" style="display: block; margin-bottom: 5px;">Latitude:</label>
+                                <input type="number" id="latitudeInput" class="input-field" placeholder="e.g., 40.7128" step="0.0001" min="-90" max="90">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="longitudeInput" style="display: block; margin-bottom: 5px;">Longitude:</label>
+                                <input type="number" id="longitudeInput" class="input-field" placeholder="e.g., -74.0060" step="0.0001" min="-180" max="180">
+                            </div>
+
+                            <div id="sunTimesDisplay" style="font-size: 0.85em; color: #666; margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 5px;">
+                                <span id="sunTimesText">Location not set. Enable location access or enter coordinates manually.</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="ttsRate">Speech Rate:</label>
-                        <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1" class="slider">
-                        <span id="ttsRateValue">1x</span>
+                    <div class="settings-tab-content" data-content="voice">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">🎙️ Text-to-Speech</h3>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enableTTS" checked>
+                                Enable Text-to-Speech for announcements
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ttsVoice">Voice:</label>
+                            <select id="ttsVoice" class="input-field">
+                                <option value="">Default Voice</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ttsRate">Speech Rate:</label>
+                            <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1" class="slider">
+                            <span id="ttsRateValue">1x</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ttsPitch">Speech Pitch:</label>
+                            <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1" class="slider">
+                            <span id="ttsPitchValue">1x</span>
+                        </div>
+
+                        <div class="form-group">
+                            <button id="testTTS" class="btn-primary">Test Voice</button>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="ttsPitch">Speech Pitch:</label>
-                        <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1" class="slider">
-                        <span id="ttsPitchValue">1x</span>
-                    </div>
+                    <div class="settings-tab-content" data-content="hourly">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">🕐 Hourly Time Announcements</h3>
 
-                    <div class="form-group">
-                        <button id="testTTS" class="btn-primary">Test Voice</button>
-                    </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enableHourlyAnnouncement">
+                                Enable hourly time announcements
+                            </label>
+                        </div>
 
-                    <hr style="margin: 30px 0; border: 1px solid #ddd;">
+                        <div class="form-group">
+                            <label for="hourlyAnnouncementStart">Start Time (24h format):</label>
+                            <input type="time" id="hourlyAnnouncementStart" class="input-field" value="08:00">
+                        </div>
 
-                    <h3 style="color: #667eea; margin-bottom: 15px;">🕐 Hourly Time Announcements</h3>
+                        <div class="form-group">
+                            <label for="hourlyAnnouncementEnd">End Time (24h format):</label>
+                            <input type="time" id="hourlyAnnouncementEnd" class="input-field" value="22:00">
+                        </div>
 
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="enableHourlyAnnouncement">
-                            Enable hourly time announcements
-                        </label>
-                    </div>
+                        <div class="form-group">
+                            <label for="hourlyAnnouncementFormat">Custom Format (optional):</label>
+                            <input type="text" id="hourlyAnnouncementFormat" class="input-field" placeholder='e.g., "Hey! It is {time}!"'>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="hourlyAnnouncementStart">Start Time (24h format):</label>
-                        <input type="time" id="hourlyAnnouncementStart" class="input-field" value="08:00">
-                    </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="hourlyAnnouncement24Hour">
+                                Use 24-hour format for announcements
+                            </label>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="hourlyAnnouncementEnd">End Time (24h format):</label>
-                        <input type="time" id="hourlyAnnouncementEnd" class="input-field" value="22:00">
-                    </div>
+                        <div class="form-group">
+                            <button id="testHourlyAnnouncement" class="btn-primary">Test Hourly Announcement</button>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="hourlyAnnouncementFormat">Custom Format (optional):</label>
-                        <input type="text" id="hourlyAnnouncementFormat" class="input-field" placeholder='e.g., "Hey! It is {time}!"'>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="hourlyAnnouncement24Hour">
-                            Use 24-hour format for announcements
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <button id="testHourlyAnnouncement" class="btn-primary">Test Hourly Announcement</button>
-                    </div>
-
-                    <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
-                        The clock will announce the time at the top of each hour within this time range.
-                    </p>
-
-                    <hr style="margin: 30px 0; border: 1px solid #ddd;">
-
-                    <h3 style="color: #ff6b6b; margin-bottom: 15px;">🐛 Debug Mode</h3>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="debugModeEnabled">
-                            Enable debug mode (simulate time)
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="debugSpeed">Simulation Speed:</label>
-                        <input type="number" id="debugSpeed" class="input-field" min="1" max="1000" value="1" step="1">
-                        <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                            Speed multiplier (1 = normal speed, 60 = 1 second per minute, 3600 = 1 second per hour)
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                            The clock will announce the time at the top of each hour within this time range.
                         </p>
                     </div>
 
-                    <div class="form-group">
-                        <button id="applyDebugMode" class="btn-primary" style="background-color: #ff6b6b;">Apply Debug Settings</button>
-                    </div>
+                    <div class="settings-tab-content" data-content="debug">
+                        <h3 style="color: #ff6b6b; margin-bottom: 15px;">🐛 Debug Mode</h3>
 
-                    <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
-                        When enabled, time will be simulated at the specified speed. A red indicator will show the current speed.
-                    </p>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="debugModeEnabled">
+                                Enable debug mode (simulate time)
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="debugSpeed">Simulation Speed:</label>
+                            <input type="number" id="debugSpeed" class="input-field" min="1" max="1000" value="1" step="1">
+                            <p style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                                Speed multiplier (1 = normal speed, 60 = 1 second per minute, 3600 = 1 second per hour)
+                            </p>
+                        </div>
+
+                        <div class="form-group">
+                            <button id="applyDebugMode" class="btn-primary" style="background-color: #ff6b6b;">Apply Debug Settings</button>
+                        </div>
+
+                        <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
+                            When enabled, time will be simulated at the specified speed. A red indicator will show the current speed.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

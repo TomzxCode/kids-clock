@@ -481,6 +481,13 @@ class KidsClockApp {
             this.closeSettings();
         });
 
+        // Tab switching
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                this.switchTab(e.target.dataset.tab);
+            });
+        });
+
         // Immediate settings changes
         document.getElementById('enableTTS').addEventListener('change', () => {
             this.saveCurrentSettings();
@@ -1453,6 +1460,20 @@ class KidsClockApp {
 
     closeSettings() {
         document.getElementById('settingsPanel').classList.add('hidden');
+    }
+
+    switchTab(tabName) {
+        // Remove active class from all tabs and content
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.settings-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+
+        // Add active class to clicked tab and corresponding content
+        document.querySelector(`.settings-tab[data-tab="${tabName}"]`).classList.add('active');
+        document.querySelector(`.settings-tab-content[data-content="${tabName}"]`).classList.add('active');
     }
 
     saveCurrentSettings() {
