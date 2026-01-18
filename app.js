@@ -120,6 +120,7 @@ class KidsClockApp {
         this.editingEventId = null;
         this.checkInterval = null;
         this.backgroundInterval = null;
+        this.wakeLock = null;
 
         // Debug mode state
         this.debugMode = {
@@ -150,7 +151,8 @@ class KidsClockApp {
             backgroundMode: 'gradient',
             // Location for sunrise/sunset calculations (default: null = will try to detect)
             latitude: null,
-            longitude: null
+            longitude: null,
+            keepScreenAwake: false
         };
         this.timeColors = [
             { time: '06:00', color1: '#FFB347', color2: '#FFCC33', name: 'Dawn' },
@@ -263,6 +265,53 @@ class KidsClockApp {
         }
     }
 
+    // Screen Wake Lock API methods
+    async requestWakeLock() {
+        if (!('wakeLock' in navigator)) {
+            console.log('Screen Wake Lock API not supported');
+            return false;
+        }
+
+        try {
+            this.wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Screen Wake Lock active');
+            return true;
+        } catch (err) {
+            console.log(`Screen Wake Lock error: ${err.name}, ${err.message}`);
+            return false;
+        }
+    }
+
+    async releaseWakeLock() {
+        if (this.wakeLock !== null) {
+            try {
+                await this.wakeLock.release();
+                this.wakeLock = null;
+                console.log('Screen Wake Lock released');
+            } catch (err) {
+                console.log(`Screen Wake Lock release error: ${err.name}, ${err.message}`);
+            }
+        }
+    }
+
+    handleWakeLockRelease() {
+        if (this.wakeLock) {
+            this.wakeLock.addEventListener('release', () => {
+                console.log('Screen Wake Lock was released');
+                this.wakeLock = null;
+            });
+        }
+    }
+
+    async updateWakeLock() {
+        if (this.settings.keepScreenAwake) {
+            await this.requestWakeLock();
+            this.handleWakeLockRelease();
+        } else {
+            await this.releaseWakeLock();
+        }
+    }
+
     init() {
         this.loadEvents();
         this.loadSettings();
@@ -281,6 +330,14 @@ class KidsClockApp {
         this.loadVoices();
         this.applySavedClockType();
         this.applyBackgroundMode();
+        // Initialize wake lock if enabled
+        this.updateWakeLock();
+        // Re-acquire wake lock when page becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && this.settings.keepScreenAwake) {
+                this.updateWakeLock();
+            }
+        });
     }
 
     // Clock Functions
@@ -442,6 +499,10 @@ class KidsClockApp {
         });
 
         document.getElementById('showAnalogSeconds').addEventListener('change', () => {
+            this.saveCurrentSettings();
+        });
+
+        document.getElementById('keepScreenAwake').addEventListener('change', () => {
             this.saveCurrentSettings();
         });
 
@@ -1356,6 +1417,7 @@ class KidsClockApp {
         document.getElementById('showAnalogClock').checked = this.settings.showAnalogClock;
         document.getElementById('showSeconds').checked = this.settings.showSeconds;
         document.getElementById('showAnalogSeconds').checked = this.settings.showAnalogSeconds;
+        document.getElementById('keepScreenAwake').checked = this.settings.keepScreenAwake;
         document.getElementById('enableHourlyAnnouncement').checked = this.settings.enableHourlyAnnouncement;
         document.getElementById('hourlyAnnouncementStart').value = this.settings.hourlyAnnouncementStart;
         document.getElementById('hourlyAnnouncementEnd').value = this.settings.hourlyAnnouncementEnd;
@@ -1403,6 +1465,7 @@ class KidsClockApp {
         this.settings.showAnalogClock = document.getElementById('showAnalogClock').checked;
         this.settings.showSeconds = document.getElementById('showSeconds').checked;
         this.settings.showAnalogSeconds = document.getElementById('showAnalogSeconds').checked;
+        this.settings.keepScreenAwake = document.getElementById('keepScreenAwake').checked;
         this.settings.enableHourlyAnnouncement = document.getElementById('enableHourlyAnnouncement').checked;
         this.settings.hourlyAnnouncementStart = document.getElementById('hourlyAnnouncementStart').value;
         this.settings.hourlyAnnouncementEnd = document.getElementById('hourlyAnnouncementEnd').value;
@@ -1412,6 +1475,7 @@ class KidsClockApp {
         this.settings.debugSpeed = parseFloat(document.getElementById('debugSpeed').value) || 1;
 
         this.saveSettings();
+        this.updateWakeLock();
     }
 
     saveSettings() {
