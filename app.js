@@ -316,6 +316,7 @@ class KidsClockApp {
         this.loadEvents();
         this.loadSettings();
         this.loadTimeColors();
+        this.initWebGLBackground();
         this.generateStars();
         this.randomizeCarColors();
         this.setupEventListeners();
@@ -1849,6 +1850,14 @@ class KidsClockApp {
         }
     }
 
+    // WebGL Background Functions
+    initWebGLBackground() {
+        const canvas = document.getElementById('webglBackground');
+        if (canvas) {
+            this.webglBackground = new WebGLBackground(canvas);
+        }
+    }
+
     // Animated Background Functions
     generateStars() {
         const starsContainer = document.getElementById('starsContainer');
@@ -1945,14 +1954,24 @@ class KidsClockApp {
     applyBackgroundMode() {
         const dayBackground = document.getElementById('dayBackground');
         const nightBackground = document.getElementById('nightBackground');
+        const webglCanvas = document.getElementById('webglBackground');
 
         this.applyBackgroundModeUI();
 
         if (this.settings.backgroundMode === 'animated') {
-            dayBackground.classList.remove('hidden');
-            nightBackground.classList.remove('hidden');
+            // Show WebGL 3D background
+            if (webglCanvas) {
+                webglCanvas.style.display = 'block';
+            }
+            // Hide legacy CSS backgrounds
+            dayBackground.classList.add('hidden');
+            nightBackground.classList.add('hidden');
             this.updateAnimatedBackground();
         } else {
+            // Hide WebGL background for gradient mode
+            if (webglCanvas) {
+                webglCanvas.style.display = 'none';
+            }
             dayBackground.classList.add('hidden');
             nightBackground.classList.add('hidden');
         }
@@ -1967,6 +1986,8 @@ class KidsClockApp {
 
         // Calculate sunrise/sunset times if location is available
         let isDaytime;
+        let sunMoonAngle = 0;
+
         if (this.settings.latitude !== null && this.settings.longitude !== null) {
             const times = SunCalc.getTimes(now, this.settings.latitude, this.settings.longitude);
             const sunrise = times.sunrise;
@@ -1976,17 +1997,66 @@ class KidsClockApp {
                 // Use actual sunrise/sunset times with a buffer for dawn/dusk
                 // Consider it "daytime" from sunrise to sunset
                 isDaytime = now >= sunrise && now < sunset;
+
+                // Calculate sun/moon angle based on time
+                if (isDaytime) {
+                    // Sun moves from east (left) to west (right) during the day
+                    const dayDuration = sunset.getTime() - sunrise.getTime();
+                    const timeSinceSunrise = now.getTime() - sunrise.getTime();
+                    const progress = timeSinceSunrise / dayDuration;
+                    // Sun arc: from -90° (horizon east) to 90° (horizon west) passing through 0° (zenith)
+                    sunMoonAngle = Math.PI * (progress - 0.5);
+                } else {
+                    // Moon moves during the night
+                    const nightStart = sunset;
+                    let nightEnd = new Date(sunrise);
+                    if (now < sunrise) {
+                        // After midnight, before sunrise
+                        nightEnd = sunrise;
+                    } else {
+                        // After sunset, before midnight
+                        nightEnd = new Date(sunrise.getTime() + 24 * 60 * 60 * 1000);
+                    }
+                    const nightDuration = nightEnd.getTime() - nightStart.getTime();
+                    const timeSinceNightStart = now.getTime() - nightStart.getTime();
+                    const progress = timeSinceNightStart / nightDuration;
+                    sunMoonAngle = Math.PI * (progress - 0.5);
+                }
             } else {
                 // Fallback to hardcoded values if calculation fails (polar regions)
                 isDaytime = now.getHours() >= 6 && now.getHours() < 19;
+                const hour = now.getHours() + now.getMinutes() / 60;
+                if (isDaytime) {
+                    const progress = (hour - 6) / 13;
+                    sunMoonAngle = Math.PI * (progress - 0.5);
+                } else {
+                    const nightHour = hour >= 19 ? hour - 19 : hour + 5;
+                    const progress = nightHour / 11;
+                    sunMoonAngle = Math.PI * (progress - 0.5);
+                }
             }
         } else {
             // No location set, try to get it
             this.tryGetLocation();
             // Fallback to hardcoded values until location is available
             isDaytime = now.getHours() >= 6 && now.getHours() < 19;
+            const hour = now.getHours() + now.getMinutes() / 60;
+            if (isDaytime) {
+                const progress = (hour - 6) / 13;
+                sunMoonAngle = Math.PI * (progress - 0.5);
+            } else {
+                const nightHour = hour >= 19 ? hour - 19 : hour + 5;
+                const progress = nightHour / 11;
+                sunMoonAngle = Math.PI * (progress - 0.5);
+            }
         }
 
+        // Update WebGL background
+        if (this.webglBackground) {
+            this.webglBackground.updateTimeOfDay(isDaytime, sunMoonAngle);
+        }
+
+        // Legacy CSS backgrounds (hidden)
         if (isDaytime) {
             dayBackground.style.opacity = '1';
             nightBackground.style.opacity = '0';

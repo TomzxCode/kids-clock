@@ -11,8 +11,11 @@
     <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🕐</text></svg>">
 </head>
 <body>
-    <!-- Animated Day Background -->
-    <div id="dayBackground" class="animated-background day-background hidden">
+    <!-- WebGL 3D Background -->
+    <canvas id="webglBackground" class="webgl-background" style="display: none;"></canvas>
+
+    <!-- Animated Day Background (LEGACY - will be removed) -->
+    <div id="dayBackground" class="animated-background day-background hidden" style="display: none;">
         <div class="day-sun">
             <div class="sun-rays"></div>
         </div>
@@ -227,8 +230,8 @@
         </div>
     </div>
 
-    <!-- Animated Night Background -->
-    <div id="nightBackground" class="animated-background night-background hidden">
+    <!-- Animated Night Background (LEGACY - will be removed) -->
+    <div id="nightBackground" class="animated-background night-background hidden" style="display: none;">
         <div class="night-moon">
             <div class="moon-crater moon-crater-1"></div>
             <div class="moon-crater moon-crater-2"></div>
@@ -787,6 +790,7 @@
         </div>
     </div>
 
+    <script src="webgl-background.js"></script>
     <script src="app.js"></script>
     <script>
         // Register service worker
