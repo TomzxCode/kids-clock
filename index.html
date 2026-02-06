@@ -654,14 +654,34 @@
 
                         <div id="animatedBackgroundInfo" class="form-group hidden">
                             <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                                Animated backgrounds automatically show a sunny day scene during daytime hours and a starry night scene during nighttime hours.
-                            </p>
-                            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
-                                Day/night times are calculated based on your location using actual sunrise and sunset times.
+                                Animated backgrounds show a sunny day scene and a starry night scene. Choose how to switch between them.
                             </p>
 
                             <div class="form-group">
-                                <label>📍 Location for Sunrise/Sunset:</label>
+                                <label>Day/Night Mode:</label>
+                                <div style="margin-top: 10px;">
+                                    <label style="display: block; margin-bottom: 8px;">
+                                        <input type="radio" name="dayNightMode" value="auto" checked>
+                                        Auto (based on time of day)
+                                    </label>
+                                    <label style="display: block; margin-bottom: 8px;">
+                                        <input type="radio" name="dayNightMode" value="day">
+                                        Always Day
+                                    </label>
+                                    <label style="display: block; margin-bottom: 8px;">
+                                        <input type="radio" name="dayNightMode" value="night">
+                                        Always Night
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="autoModeLocationSettings">
+                                <p style="font-size: 0.9em; color: #666; margin-top: 15px; margin-bottom: 10px;">
+                                    In Auto mode, day/night times are calculated based on your location using actual sunrise and sunset times.
+                                </p>
+
+                                <div class="form-group">
+                                    <label>📍 Location for Sunrise/Sunset:</label>
                                 <button id="detectLocationBtn" class="btn-secondary" style="width: 100%; margin-top: 5px;">📍 Auto-detect Location</button>
                             </div>
 
@@ -677,6 +697,7 @@
 
                             <div id="sunTimesDisplay" style="font-size: 0.85em; color: #666; margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 5px;">
                                 <span id="sunTimesText">Location not set. Enable location access or enter coordinates manually.</span>
+                            </div>
                             </div>
                         </div>
                     </div>

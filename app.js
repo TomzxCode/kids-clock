@@ -149,6 +149,8 @@ class KidsClockApp {
             debugMode: false,
             debugSpeed: 1,
             backgroundMode: 'gradient',
+            // Day/night mode for animated background: 'auto', 'day', 'night'
+            dayNightMode: 'auto',
             // Location for sunrise/sunset calculations (default: null = will try to detect)
             latitude: null,
             longitude: null,
@@ -572,6 +574,16 @@ class KidsClockApp {
                 this.saveSettings();
                 this.applyBackgroundMode();
                 this.updateBackground();
+            });
+        });
+
+        // Day/night mode switching for animated background
+        document.querySelectorAll('input[name="dayNightMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.settings.dayNightMode = e.target.value;
+                this.saveSettings();
+                this.updateAnimatedBackground();
+                this.updateDayNightModeUI();
             });
         });
 
@@ -1444,8 +1456,15 @@ class KidsClockApp {
             radio.checked = (radio.value === this.settings.backgroundMode);
         });
 
+        // Set day/night mode
+        const dayNightModeRadios = document.querySelectorAll('input[name="dayNightMode"]');
+        dayNightModeRadios.forEach(radio => {
+            radio.checked = (radio.value === this.settings.dayNightMode);
+        });
+
         // Show/hide appropriate settings section
         this.applyBackgroundModeUI();
+        this.updateDayNightModeUI();
 
         // Render time colors
         this.renderTimeColors();
@@ -1942,6 +1961,16 @@ class KidsClockApp {
         }
     }
 
+    updateDayNightModeUI() {
+        const autoModeLocationSettings = document.getElementById('autoModeLocationSettings');
+
+        if (this.settings.dayNightMode === 'auto') {
+            autoModeLocationSettings.classList.remove('hidden');
+        } else {
+            autoModeLocationSettings.classList.add('hidden');
+        }
+    }
+
     applyBackgroundMode() {
         const dayBackground = document.getElementById('dayBackground');
         const nightBackground = document.getElementById('nightBackground');
@@ -1965,26 +1994,34 @@ class KidsClockApp {
         const dayBackground = document.getElementById('dayBackground');
         const nightBackground = document.getElementById('nightBackground');
 
-        // Calculate sunrise/sunset times if location is available
+        // Determine isDaytime based on dayNightMode setting
         let isDaytime;
-        if (this.settings.latitude !== null && this.settings.longitude !== null) {
-            const times = SunCalc.getTimes(now, this.settings.latitude, this.settings.longitude);
-            const sunrise = times.sunrise;
-            const sunset = times.sunset;
 
-            if (sunrise && sunset) {
-                // Use actual sunrise/sunset times with a buffer for dawn/dusk
-                // Consider it "daytime" from sunrise to sunset
-                isDaytime = now >= sunrise && now < sunset;
+        if (this.settings.dayNightMode === 'day') {
+            isDaytime = true;
+        } else if (this.settings.dayNightMode === 'night') {
+            isDaytime = false;
+        } else {
+            // Auto mode - calculate based on time and location
+            if (this.settings.latitude !== null && this.settings.longitude !== null) {
+                const times = SunCalc.getTimes(now, this.settings.latitude, this.settings.longitude);
+                const sunrise = times.sunrise;
+                const sunset = times.sunset;
+
+                if (sunrise && sunset) {
+                    // Use actual sunrise/sunset times with a buffer for dawn/dusk
+                    // Consider it "daytime" from sunrise to sunset
+                    isDaytime = now >= sunrise && now < sunset;
+                } else {
+                    // Fallback to hardcoded values if calculation fails (polar regions)
+                    isDaytime = now.getHours() >= 6 && now.getHours() < 19;
+                }
             } else {
-                // Fallback to hardcoded values if calculation fails (polar regions)
+                // No location set, try to get it
+                this.tryGetLocation();
+                // Fallback to hardcoded values until location is available
                 isDaytime = now.getHours() >= 6 && now.getHours() < 19;
             }
-        } else {
-            // No location set, try to get it
-            this.tryGetLocation();
-            // Fallback to hardcoded values until location is available
-            isDaytime = now.getHours() >= 6 && now.getHours() < 19;
         }
 
         if (isDaytime) {
