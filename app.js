@@ -121,6 +121,7 @@ class KidsClockApp {
         this.checkInterval = null;
         this.backgroundInterval = null;
         this.wakeLock = null;
+        this.webglBackground = null;
 
         // Debug mode state
         this.debugMode = {
@@ -1740,6 +1741,9 @@ class KidsClockApp {
         // For gradient mode, update the body background
         if (this.settings.backgroundMode !== 'gradient') {
             document.body.style.background = 'transparent';
+            if (this.settings.backgroundMode === 'webgl') {
+                this.updateWebGLClockColors();
+            }
             return;
         }
 
@@ -1791,6 +1795,19 @@ class KidsClockApp {
         document.body.style.background = `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
 
         // Update clock colors to match
+        this.updateClockColors(color1, color2);
+    }
+
+    updateWebGLClockColors() {
+        // Mirror the shader's daylight curve so the clock stays readable
+        // against the GPU-rendered sky
+        const now = this.getCurrentTime();
+        const dayPhase = (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / 86400;
+        const sunElevation = Math.sin((dayPhase - 0.25) * 2 * Math.PI);
+        const daylight = Math.max(0, Math.min(1, (sunElevation + 0.12) / 0.37));
+
+        const color1 = this.interpolateColor('#141a3f', '#4099f2', daylight);
+        const color2 = this.interpolateColor('#05081a', '#a6d9fa', daylight);
         this.updateClockColors(color1, color2);
     }
 
@@ -1951,14 +1968,11 @@ class KidsClockApp {
     applyBackgroundModeUI() {
         const gradientSettings = document.getElementById('gradientBackgroundSettings');
         const animatedInfo = document.getElementById('animatedBackgroundInfo');
+        const webglInfo = document.getElementById('webglBackgroundInfo');
 
-        if (this.settings.backgroundMode === 'animated') {
-            gradientSettings.classList.add('hidden');
-            animatedInfo.classList.remove('hidden');
-        } else {
-            gradientSettings.classList.remove('hidden');
-            animatedInfo.classList.add('hidden');
-        }
+        gradientSettings.classList.toggle('hidden', this.settings.backgroundMode !== 'gradient');
+        animatedInfo.classList.toggle('hidden', this.settings.backgroundMode !== 'animated');
+        webglInfo.classList.toggle('hidden', this.settings.backgroundMode !== 'webgl');
     }
 
     updateDayNightModeUI() {
@@ -1974,6 +1988,16 @@ class KidsClockApp {
     applyBackgroundMode() {
         const dayBackground = document.getElementById('dayBackground');
         const nightBackground = document.getElementById('nightBackground');
+        const webglCanvas = document.getElementById('webglBackground');
+
+        if (this.settings.backgroundMode === 'webgl' && !WebGLBackground.isSupported()) {
+            console.warn('WebGL is not supported on this device, falling back to gradient background');
+            this.settings.backgroundMode = 'gradient';
+            this.saveSettings();
+            document.querySelectorAll('input[name="backgroundMode"]').forEach(radio => {
+                radio.checked = (radio.value === 'gradient');
+            });
+        }
 
         this.applyBackgroundModeUI();
 
@@ -1984,6 +2008,19 @@ class KidsClockApp {
         } else {
             dayBackground.classList.add('hidden');
             nightBackground.classList.add('hidden');
+        }
+
+        if (this.settings.backgroundMode === 'webgl') {
+            webglCanvas.classList.remove('hidden');
+            if (!this.webglBackground) {
+                this.webglBackground = new WebGLBackground(webglCanvas, () => this.getCurrentTime());
+            }
+            this.webglBackground.start();
+        } else {
+            webglCanvas.classList.add('hidden');
+            if (this.webglBackground) {
+                this.webglBackground.stop();
+            }
         }
     }
 

@@ -2907,3 +2907,8 @@ body {
 [data-car-style="hatchback"] .car-wheel-back {
     right: 10px;
 }
+
+/* WebGL Background */
+.webgl-background {
+    display: block;
+}

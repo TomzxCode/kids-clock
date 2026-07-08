@@ -375,6 +375,9 @@
         </div>
     </div>
 
+    <!-- WebGL Dynamic Background -->
+    <canvas id="webglBackground" class="animated-background webgl-background hidden"></canvas>
+
     <div id="app">
         <!-- Settings Button -->
         <button id="settingsBtn" class="icon-btn settings-btn-fixed" aria-label="Settings">⚙️</button>
@@ -641,6 +644,10 @@
                                     <input type="radio" name="backgroundMode" value="animated">
                                     Animated Day/Night (scenes with animations)
                                 </label>
+                                <label style="display: block; margin-bottom: 8px;">
+                                    <input type="radio" name="backgroundMode" value="webgl">
+                                    WebGL Day/Night (GPU-rendered dynamic scene)
+                                </label>
                             </div>
                         </div>
 
@@ -699,6 +706,12 @@
                                 <span id="sunTimesText">Location not set. Enable location access or enter coordinates manually.</span>
                             </div>
                             </div>
+                        </div>
+
+                        <div id="webglBackgroundInfo" class="form-group hidden">
+                            <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                                The WebGL background is rendered live on your graphics card. The sun and moon travel across the sky with the time of day, clouds drift by, stars twinkle at night, and fireflies glow over the rolling hills. The scene transitions smoothly through dawn, day, dusk and night.
+                            </p>
                         </div>
                     </div>
 
@@ -808,6 +821,7 @@
         </div>
     </div>
 
+    <script src="webgl-background.js"></script>
     <script src="app.js"></script>
     <script>
         // Register service worker

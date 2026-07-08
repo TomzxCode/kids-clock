@@ -1,10 +1,11 @@
 // Service Worker for Kids Clock PWA
-const CACHE_NAME = 'kids-clock-v1';
+const CACHE_NAME = 'kids-clock-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/webgl-background.js',
   '/manifest.json'
 ];
 
