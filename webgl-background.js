@@ -1,8 +1,10 @@
 // WebGL Dynamic Background for Kids Clock
-// Renders a procedural day/night scene on the GPU: the sun and moon travel
-// across the sky based on the time of day, clouds drift, birds fly by,
-// sheep graze between the trees, a bunny hops over the flowery hills,
-// stars twinkle and fireflies glow at night.
+// Renders a photorealistic procedural landscape on the GPU, driven by the
+// time of day. Uses a physically-inspired atmospheric scattering model
+// (Rayleigh + Mie) with HDR lighting and ACES tonemapping. The sun and moon
+// travel across the sky, perspective clouds drift overhead, fbm mountain
+// ridges recede in aerial perspective, and small wildlife (birds, sheep,
+// a rabbit, butterflies, fireflies) inhabit the meadow.
 
 const WEBGL_BG_VERTEX_SHADER = `
 attribute vec2 a_position;
@@ -12,44 +14,83 @@ void main() {
 `;
 
 const WEBGL_BG_FRAGMENT_SHADER = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 
 uniform vec2 u_resolution;
 uniform float u_time;     // seconds, drives animation (clouds, twinkle, critters)
 uniform float u_dayPhase; // 0..1 fraction of the 24h day (0 = midnight)
 
+#define PI 3.14159265359
 #define TWO_PI 6.28318530718
 
-float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+float hash12(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
-float noise(vec2 p) {
+float vnoise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
-               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
+               mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
 float fbm(vec2 p) {
+    const mat2 rot = mat2(0.80, -0.60, 0.60, 0.80);
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 5; i++) {
-        v += a * noise(p);
-        p = p * 2.02 + vec2(17.3, 9.1);
+    for (int i = 0; i < 4; i++) {
+        v += a * vnoise(p);
+        p = rot * p * 2.03 + vec2(11.7, 5.3);
         a *= 0.5;
     }
     return v;
 }
 
-// Silhouette height of the back and front hills
-float hillY1(float x) {
-    return 0.24 + 0.05 * sin(x * 2.1 + 1.7) + 0.025 * sin(x * 5.3 + 0.4);
+// Transmittance of direct sunlight through the atmosphere for a given
+// sun height: white overhead, deep orange-red at the horizon
+vec3 sunTrans(float y) {
+    float m = 1.0 / max(y * 1.8 + 0.06, 0.02);
+    return exp(-vec3(0.07, 0.17, 0.40) * m);
 }
 
-float hillY2(float x) {
-    return 0.15 + 0.04 * sin(x * 3.0 + 4.0) + 0.020 * sin(x * 7.1 + 2.0);
+// Single-slab atmospheric scattering: Rayleigh (blue sky, white horizon
+// haze) plus Mie forward scattering (warm glow around a low sun)
+vec3 skyRadiance(vec3 rd, vec3 sd, vec3 sunT) {
+    float y = max(rd.y, 0.0);
+    float mu = clamp(dot(rd, sd), -1.0, 1.0);
+    float dayAmt = smoothstep(-0.10, 0.25, sd.y);
+    float duskAmt = smoothstep(-0.22, 0.08, sd.y);
+
+    vec3 betaR = vec3(0.12, 0.27, 0.64);
+    float od = 1.0 / (y + 0.085);
+    vec3 tView = exp(-betaR * od);
+
+    float phR = 0.75 * (1.0 + mu * mu);
+    float g = 0.82;
+    float phM = (1.0 - g * g) / (4.0 * PI * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
+
+    vec3 col = (1.0 - tView) * phR * mix(vec3(1.0), sunT, 0.4) * (0.04 + 1.00 * dayAmt);
+    // Mie glow: tight and subtle in full day, broad and fiery at dusk/dawn
+    col += (1.0 - exp(-od * 0.30)) * phM * sunT * (0.45 + 1.5 * (1.0 - dayAmt)) * duskAmt;
+    // faint night airglow near the horizon
+    col += (1.0 - tView.b) * vec3(0.010, 0.013, 0.024) * (1.0 - dayAmt);
+    return col;
+}
+
+// Domain-warped fbm cloud field
+float cloudDensity(vec2 cp, float t) {
+    cp += vec2(t * 0.008, t * 0.002);
+    float q = fbm(cp * 0.5);
+    vec2 warp = vec2(fbm(cp * 0.9 + q * 1.4),
+                     fbm(cp * 0.9 + q * 1.4 + vec2(5.2, 1.3)));
+    return fbm(cp * 1.3 + (warp - 0.5) * 1.3);
 }
 
 float segDist(vec2 p, vec2 a, vec2 b) {
@@ -62,238 +103,252 @@ float ellipseMask(vec2 rel, vec2 r, float soft) {
     return smoothstep(1.0 + soft, 1.0 - soft, length(rel / r));
 }
 
-// Upright triangle: half-width halfW at yBase tapering to a point at yTip
-float triangleMask(vec2 rel, float halfW, float yBase, float yTip, float e) {
-    float t = clamp((rel.y - yBase) / (yTip - yBase), 0.0, 1.0);
-    float w = halfW * (1.0 - t);
-    return smoothstep(e, -e, abs(rel.x) - w)
-         * smoothstep(yBase - e, yBase + e, rel.y)
-         * smoothstep(yTip + e, yTip - e, rel.y);
+// Conifer silhouette with a noisy edge so it reads as layered branches
+float conifer(vec2 rel, float s, float seed, float e) {
+    float hgt = 0.14 * s;
+    float ty = rel.y / hgt;
+    float band = step(0.0, ty) * step(ty, 1.0);
+    float w = 0.030 * s * (1.0 - ty * 0.92)
+            * (0.50 + 0.65 * vnoise(vec2(rel.y * 130.0 / s, seed)));
+    float foliage = band * smoothstep(e, -e, abs(rel.x) - w);
+    float trunk = step(abs(rel.x), 0.0022 * s)
+                * step(-0.012 * s, rel.y) * step(rel.y, 0.02 * s);
+    return max(foliage, trunk);
 }
 
-// Classic two-stroke gull silhouette with flapping wings
+// Two-stroke gull silhouette with flapping wings
 float birdMask(vec2 rel, float flap, float s, float e) {
-    vec2 tipL = vec2(-0.016, 0.011 * flap) * s;
-    vec2 tipR = vec2(0.016, 0.011 * flap) * s;
+    vec2 tipL = vec2(-0.011, 0.008 * flap) * s;
+    vec2 tipR = vec2(0.011, 0.008 * flap) * s;
     float d = min(segDist(rel, vec2(0.0), tipL), segDist(rel, vec2(0.0), tipR));
-    return smoothstep(0.0022 * s + e, 0.0022 * s - e, d);
+    return smoothstep(0.0016 * s + e, 0.0016 * s - e, d);
 }
 
-vec3 drawPine(vec3 col, vec2 p, vec2 base, float s, vec3 foliage, vec3 trunkC, float e) {
-    vec2 rel = p - base;
-    float trunk = smoothstep(e, -e, abs(rel.x) - 0.007 * s)
-                * smoothstep(-0.02 * s, -0.02 * s + e, rel.y)
-                * smoothstep(0.035 * s + e, 0.035 * s - e, rel.y);
-    col = mix(col, trunkC, trunk);
-    float m = triangleMask(rel - vec2(0.0, 0.020 * s), 0.050 * s, 0.0, 0.075 * s, e);
-    m = max(m, triangleMask(rel - vec2(0.0, 0.060 * s), 0.040 * s, 0.0, 0.065 * s, e));
-    m = max(m, triangleMask(rel - vec2(0.0, 0.095 * s), 0.030 * s, 0.0, 0.055 * s, e));
-    col = mix(col, foliage * (0.85 + 0.30 * noise(p * 25.0)), m);
-    return col;
-}
-
-vec3 drawLeafyTree(vec3 col, vec2 p, vec2 base, float s, vec3 canopy, vec3 trunkC, float e) {
-    vec2 rel = p - base;
-    float trunk = smoothstep(e, -e, abs(rel.x) - 0.008 * s)
-                * smoothstep(-0.02 * s, -0.02 * s + e, rel.y)
-                * smoothstep(0.075 * s + e, 0.075 * s - e, rel.y);
-    col = mix(col, trunkC, trunk);
-    float d = length((rel - vec2(0.0, 0.105 * s)) / (0.055 * s));
-    d = min(d, length((rel - vec2(-0.045 * s, 0.080 * s)) / (0.042 * s)));
-    d = min(d, length((rel - vec2(0.045 * s, 0.080 * s)) / (0.042 * s)));
-    float m = smoothstep(1.0, 0.92, d);
-    col = mix(col, canopy * (0.85 + 0.30 * noise(p * 25.0)), m);
-    return col;
-}
-
-vec3 drawSheep(vec3 col, vec2 p, vec2 pos, float dir, float s, float daylight, float t, float e) {
-    vec2 rel = (p - pos) / s;
-    rel.x *= dir;
-    vec3 wool = vec3(0.95, 0.95, 0.92) * (0.30 + 0.70 * daylight);
-    vec3 dark = vec3(0.13, 0.12, 0.14) * (0.45 + 0.55 * daylight);
-
-    float legs = max(
-        smoothstep(e, -e, abs(rel.x + 0.011) - 0.0030),
-        smoothstep(e, -e, abs(rel.x - 0.011) - 0.0030))
-        * smoothstep(-0.021, -0.021 + e, rel.y)
-        * smoothstep(e, -e, rel.y);
-    col = mix(col, dark, legs);
-
-    // Head bobs down slowly as the sheep grazes
-    float bob = 0.007 * (0.5 + 0.5 * sin(t * 0.8 + pos.x * 20.0));
-    float head = ellipseMask(rel - vec2(0.027, 0.006 - bob), vec2(0.009, 0.012), 0.15);
-    col = mix(col, dark, head);
-
-    float fluff = 1.0 + 0.12 * noise(rel * 250.0);
-    float body = smoothstep(1.08, 0.90, length(rel / vec2(0.027, 0.018)) * fluff);
-    col = mix(col, wool, body);
-    return col;
-}
-
-vec3 drawBunny(vec3 col, vec2 p, vec2 pos, float s, float daylight) {
-    vec2 rel = (p - pos) / s;
-    vec3 fur = mix(vec3(0.05, 0.07, 0.11), vec3(0.45, 0.36, 0.29), daylight);
-    vec3 tailC = mix(vec3(0.15, 0.17, 0.22), vec3(0.95, 0.92, 0.88), daylight);
-    float body = ellipseMask(rel, vec2(0.016, 0.012), 0.10);
-    float head = ellipseMask(rel - vec2(0.015, 0.010), vec2(0.008, 0.0075), 0.12);
-    float ear1 = ellipseMask(rel - vec2(0.010, 0.024), vec2(0.0028, 0.0085), 0.15);
-    float ear2 = ellipseMask(rel - vec2(0.017, 0.023), vec2(0.0028, 0.0080), 0.15);
-    col = mix(col, fur, max(max(body, head), max(ear1, ear2)));
-    col = mix(col, tailC, ellipseMask(rel - vec2(-0.016, 0.005), vec2(0.0045, 0.0045), 0.2));
-    return col;
+vec3 aces(vec3 x) {
+    return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
 }
 
 void main() {
-    vec2 uv = gl_FragCoord.xy / u_resolution;
+    vec2 fragUV = gl_FragCoord.xy / u_resolution;
     float aspect = u_resolution.x / u_resolution.y;
-    vec2 p = vec2(uv.x * aspect, uv.y);
-    float e = 2.0 / u_resolution.y;
+    float t = u_time;
+    float e = 1.5 / u_resolution.y;
 
-    // Sun elevation: rises at 06:00, peaks at noon, sets at 18:00
-    float sunAngle = (u_dayPhase - 0.25) * TWO_PI;
-    float sunEl = sin(sunAngle);
-    float daylight = smoothstep(-0.12, 0.25, sunEl);
-    float twilight = 1.0 - smoothstep(0.0, 0.35, abs(sunEl));
+    // Camera ray; horizon sits at 30% of screen height
+    vec2 q = vec2((fragUV.x - 0.5) * aspect, fragUV.y - 0.30);
+    vec3 rd = normalize(vec3(q.x, q.y, 0.9));
 
-    // Sky gradient blending between night and day palettes
-    vec3 dayTop = vec3(0.25, 0.60, 0.95);
-    vec3 dayBottom = vec3(0.65, 0.85, 0.98);
-    vec3 nightTop = vec3(0.02, 0.03, 0.10);
-    vec3 nightBottom = vec3(0.08, 0.10, 0.25);
-    vec3 sky = mix(mix(nightBottom, dayBottom, daylight),
-                   mix(nightTop, dayTop, daylight),
-                   smoothstep(0.0, 1.0, uv.y));
+    // Sun rises at 06:00, peaks at noon, sets at 18:00; moon on the
+    // opposite arc, in a slightly different orbital plane
+    // Orbits are flattened so both bodies stay inside the camera frame
+    // at their culmination instead of passing overhead out of view
+    float ang = (u_dayPhase - 0.25) * TWO_PI;
+    vec3 sunDir = normalize(vec3(-cos(ang) * 0.78, sin(ang) * 0.59, 0.90));
+    vec3 moonDir = normalize(vec3(cos(ang) * 0.78, -sin(ang) * 0.59, 0.90));
 
-    // Warm dawn/dusk glow near the horizon
-    vec3 glowColor = vec3(1.0, 0.45, 0.25);
-    float horizonGlow = twilight * (1.0 - smoothstep(0.0, 0.55, uv.y));
-    sky = mix(sky, glowColor, horizonGlow * 0.55);
+    float dayAmt = smoothstep(-0.10, 0.25, sunDir.y);
+    float duskAmt = smoothstep(-0.22, 0.08, sunDir.y);
+    float moonUp = smoothstep(0.0, 0.20, moonDir.y);
+    vec3 sunT = sunTrans(sunDir.y);
 
-    // Stars (night only), twinkling on a hashed grid
-    vec2 sp = p * 55.0;
-    vec2 cell = floor(sp);
-    float h = hash(cell);
-    vec2 starPos = vec2(hash(cell + 0.13), hash(cell + 0.71)) * 0.8 + 0.1;
-    float starDist = length(fract(sp) - starPos);
-    float twinkle = 0.6 + 0.4 * sin(u_time * (1.5 + h * 3.0) + h * 20.0);
-    float star = smoothstep(0.14, 0.0, starDist) * step(0.82, h) * twinkle;
-    sky += star * (1.0 - daylight) * smoothstep(0.25, 0.45, uv.y) * vec3(0.9, 0.95, 1.0);
+    // ------ Sky ------
+    vec3 col = skyRadiance(rd, sunDir, sunT);
 
-    // Sun: disc + glow travelling in an arc across the sky
-    vec2 sunPos = vec2((0.5 - cos(sunAngle) * 0.40) * aspect, 0.24 + sunEl * 0.62);
-    float dSun = distance(p, sunPos);
-    float sunDisc = smoothstep(0.058, 0.048, dSun);
-    float sunGlow = exp(-dSun * 5.0) * 0.55;
-    vec3 sunColor = mix(vec3(1.0, 0.55, 0.25), vec3(1.0, 0.95, 0.70),
-                        clamp(sunEl * 2.0, 0.0, 1.0));
-    sky += (sunDisc + sunGlow) * sunColor;
+    // Sun disc (HDR — the tonemapper turns it into a hot white core)
+    float mu = dot(rd, sunDir);
+    col += smoothstep(0.99950, 0.99978, mu) * sunT * 40.0;
+    col += pow(max(mu, 0.0), 900.0) * sunT * 4.0;
 
-    // Moon: crescent on the opposite arc, visible at night
-    float moonAngle = sunAngle + TWO_PI * 0.5;
-    vec2 moonPos = vec2((0.5 - cos(moonAngle) * 0.40) * aspect, 0.24 + sin(moonAngle) * 0.62);
-    float dMoon = distance(p, moonPos);
-    float moonDisc = smoothstep(0.050, 0.044, dMoon);
-    float moonBite = smoothstep(0.052, 0.046, distance(p, moonPos + vec2(0.020, 0.010)));
-    float moon = clamp(moonDisc - moonBite * 0.9, 0.0, 1.0);
-    float moonGlow = exp(-dMoon * 9.0) * 0.35;
-    sky += (moon + moonGlow) * vec3(0.90, 0.93, 1.0) * (1.0 - daylight);
-
-    // Drifting clouds, two fbm layers for parallax
-    float cloudBand = smoothstep(0.40, 0.55, uv.y) * (1.0 - smoothstep(0.88, 1.0, uv.y));
-    float c1 = fbm(vec2(p.x * 2.6 + u_time * 0.020, uv.y * 5.5));
-    float c2 = fbm(vec2(p.x * 4.2 + u_time * 0.035 + 31.0, uv.y * 8.0));
-    float clouds = smoothstep(0.52, 0.75, c1) * 0.85 + smoothstep(0.58, 0.80, c2) * 0.45;
-    vec3 cloudColor = mix(vec3(0.16, 0.19, 0.30), vec3(1.0), daylight);
-    cloudColor = mix(cloudColor, glowColor, twilight * 0.35);
-    sky = mix(sky, cloudColor, clamp(clouds, 0.0, 1.0) * cloudBand * 0.85);
-
-    // Birds gliding across the daytime sky
-    vec3 birdColor = mix(vec3(0.10, 0.12, 0.16), vec3(0.16, 0.18, 0.22), daylight);
-    for (int i = 0; i < 4; i++) {
-        float fi = float(i);
-        float bx = fract(u_time * (0.014 + fi * 0.004) + fi * 0.31) * (aspect + 0.10) - 0.05;
-        float by = 0.62 + 0.09 * fract(fi * 0.618) + 0.012 * sin(u_time * 1.7 + fi * 2.0);
-        float flap = sin(u_time * (7.0 + fi) + fi * 2.4);
-        float bm = birdMask(p - vec2(bx, by), flap, 0.8 + 0.15 * fi, e);
-        sky = mix(sky, birdColor, bm * daylight);
+    // ------ Stars & milky way ------
+    float starVis = (1.0 - dayAmt) * smoothstep(0.0, 0.12, rd.y);
+    if (starVis > 0.002) {
+        vec2 sc = rd.xy / (rd.z + 1.2) * 130.0;
+        vec2 cellS = floor(sc);
+        float hs = hash12(cellS);
+        vec2 sPos = vec2(hash12(cellS + 0.17), hash12(cellS + 0.53)) * 0.8 + 0.1;
+        float dS = length(fract(sc) - sPos);
+        float mag = pow(hash12(cellS + 0.71), 5.0) * 0.8 + 0.08;
+        float tw = 0.75 + 0.25 * sin(t * (1.0 + hs * 4.0) + hs * 40.0);
+        col += smoothstep(0.12, 0.0, dS) * step(0.72, hs) * mag * tw * starVis
+             * vec3(0.85, 0.90, 1.05) * 1.3;
+        // faint milky way band
+        float mwd = rd.y - (0.55 - rd.x * 0.35);
+        float mw = exp(-mwd * mwd * 28.0) * fbm(rd.xy * 4.0 + 7.3);
+        col += mw * starVis * vec3(0.014, 0.016, 0.022);
     }
 
-    // Back hill with grass texture
-    float y1 = hillY1(p.x);
-    float m1 = smoothstep(y1 + e, y1 - e, uv.y);
-    vec3 grass1 = mix(vec3(0.05, 0.10, 0.16), vec3(0.35, 0.65, 0.30), daylight);
-    grass1 *= 0.92 + 0.16 * fbm(p * 14.0);
-    vec3 col = mix(sky, grass1, m1);
+    // ------ Moon: sphere shaded by real sun direction (correct phases) ------
+    if (moonDir.y > -0.05) {
+        float mcos = dot(rd, moonDir);
+        vec3 mws = rd - moonDir * mcos;
+        float sinA = length(mws);
+        float moonR = 0.024;
+        float moonVis = smoothstep(-0.05, 0.10, moonDir.y);
+        if (mcos > 0.0 && sinA < moonR) {
+            vec3 mx = normalize(cross(vec3(0.0, 1.0, 0.0), moonDir));
+            vec3 my = cross(moonDir, mx);
+            vec2 muv = vec2(dot(mws, mx), dot(mws, my)) / moonR;
+            float r2 = dot(muv, muv);
+            vec3 n = normalize(mx * muv.x + my * muv.y - moonDir * sqrt(max(1.0 - r2, 0.0)));
+            // Light the sphere from the true anti-sun direction (the flattened
+            // display orbits would otherwise give impossible phases)
+            vec3 moonLightDir = normalize(mix(-moonDir, sunDir, 0.30));
+            float ndl = clamp(dot(n, moonLightDir), 0.0, 1.0);
+            float alb = 0.95 - 0.45 * fbm(muv * 3.5 + 7.0);   // dark maria
+            alb *= 0.80 + 0.35 * fbm(muv * 9.0);              // crater detail
+            float edgeM = smoothstep(1.0, 0.90, r2);
+            vec3 mcol = vec3(1.0, 0.97, 0.90) * alb * (ndl * 2.2 + 0.02);
+            col = mix(col, mcol, edgeM * moonVis);
+        }
+        col += exp(-sinA * 45.0) * vec3(0.045, 0.055, 0.085) * (1.0 - dayAmt) * moonVis;
+    }
 
-    // Trees along the back hill ridge
-    vec3 pineColor = mix(vec3(0.030, 0.075, 0.105), vec3(0.10, 0.42, 0.22), daylight);
-    vec3 leafColor = mix(vec3(0.040, 0.090, 0.110), vec3(0.24, 0.58, 0.26), daylight);
-    vec3 trunkColor = mix(vec3(0.045, 0.040, 0.055), vec3(0.38, 0.25, 0.14), daylight);
-    float tx1 = aspect * 0.055;
-    float tx2 = aspect * 0.135;
-    float tx3 = aspect * 0.915;
-    float tx4 = aspect * 0.700;
-    col = drawPine(col, p, vec2(tx1, hillY1(tx1)), 1.00, pineColor, trunkColor, e);
-    col = drawPine(col, p, vec2(tx2, hillY1(tx2)), 0.75, pineColor, trunkColor, e);
-    col = drawPine(col, p, vec2(tx3, hillY1(tx3)), 1.10, pineColor, trunkColor, e);
-    col = drawLeafyTree(col, p, vec2(tx4, hillY1(tx4)), 1.0, leafColor, trunkColor, e);
+    // ------ Clouds on a perspective plane, lit toward the sun ------
+    if (rd.y > 0.012) {
+        float ct = 0.35 / rd.y;
+        vec2 cp = rd.xz * ct * 1.6;
+        float dens = cloudDensity(cp, t);
+        float cover = smoothstep(0.64, 0.84, dens);
+        if (cover > 0.001) {
+            float dToSun = cloudDensity(cp + sunDir.xz * 0.18, t);
+            float lit = clamp((dens - dToSun) * 3.0, -1.0, 1.0) * 0.5 + 0.5;
+            vec3 cloudAmb = mix(vec3(0.012, 0.016, 0.030), vec3(0.30, 0.37, 0.50), dayAmt)
+                          + vec3(0.020, 0.024, 0.038) * moonUp * (1.0 - dayAmt);
+            vec3 cloudCol = cloudAmb + sunT * (1.3 * lit + 0.15) * duskAmt;
+            float fade = exp(-ct * 0.35) * smoothstep(0.012, 0.05, rd.y);
+            col = mix(col, cloudCol, cover * fade * 0.85);
+        }
+    }
 
-    // Sheep grazing on the back hill
-    float sx1 = aspect * 0.300;
-    float sx2 = aspect * 0.505;
-    col = drawSheep(col, p, vec2(sx1, hillY1(sx1) + 0.020), 1.0, 1.0, daylight, u_time, e);
-    col = drawSheep(col, p, vec2(sx2, hillY1(sx2) + 0.017), -1.0, 0.85, daylight, u_time, e);
+    // ------ Birds (day, distant silhouettes) ------
+    float birdVis = smoothstep(0.10, 0.40, dayAmt);
+    if (birdVis > 0.001 && fragUV.y > 0.45) {
+        for (int i = 0; i < 3; i++) {
+            float fi = float(i);
+            float bx = (fract(t * (0.010 + fi * 0.003) + fi * 0.37) - 0.5) * (aspect + 0.15);
+            float by = 0.58 + 0.10 * fract(fi * 0.618) + 0.010 * sin(t * 1.3 + fi * 2.0);
+            float flap = sin(t * (6.0 + fi * 0.8) + fi * 2.4);
+            float bm = birdMask(vec2(q.x - bx, fragUV.y - by), flap, 0.6 + 0.12 * fi, e);
+            col = mix(col, vec3(0.02, 0.022, 0.028), bm * birdVis * 0.85);
+        }
+    }
 
-    // Front hill with grass texture
-    float y2 = hillY2(p.x);
-    float m2 = smoothstep(y2 + e, y2 - e, uv.y);
-    vec3 grass2 = mix(vec3(0.03, 0.07, 0.12), vec3(0.25, 0.52, 0.22), daylight);
-    grass2 *= 0.92 + 0.16 * fbm(p * 17.0 + 13.0);
-    col = mix(col, grass2, m2);
+    // ------ Terrain: layered fbm ridges with aerial perspective ------
+    float sy = fragUV.y;
+    float sx = q.x;
 
-    // Flowers dotted over the front hill, open during the day
-    vec2 fCell = floor(p * 16.0);
-    float fh = hash(fCell + 9.7);
-    vec2 fPos = (fCell + vec2(hash(fCell + 3.1), hash(fCell + 6.7)) * 0.6 + 0.2) / 16.0;
-    fPos.x += 0.003 * sin(u_time * 1.5 + fh * 20.0);
-    float onGrass = step(fPos.y, hillY2(fPos.x) - 0.02);
-    float fd = distance(p, fPos);
-    vec3 petalColor = mix(vec3(1.0, 0.55, 0.75), vec3(1.0, 0.85, 0.35), step(0.5, hash(fCell + 1.3)));
-    petalColor = mix(petalColor, vec3(0.95), step(0.8, hash(fCell + 2.9)));
-    float flowerShow = step(0.55, fh) * onGrass * daylight;
-    col = mix(col, petalColor, smoothstep(0.0055, 0.0030, fd) * flowerShow);
-    col = mix(col, vec3(1.0, 0.95, 0.55), smoothstep(0.0022, 0.0010, fd) * flowerShow);
+    vec3 horizonSky = skyRadiance(normalize(vec3(rd.x, 0.035, rd.z)), sunDir, sunT);
 
-    // Bunny hopping along the front hill
-    float bunnyX = fract(u_time * 0.015 + 0.15) * (aspect + 0.08) - 0.04;
-    float hop = abs(sin(u_time * 5.0)) * 0.014;
-    col = drawBunny(col, p, vec2(bunnyX, hillY2(bunnyX) + 0.008 + hop), 1.0, daylight);
+    vec3 lightSun = sunT * smoothstep(-0.02, 0.30, sunDir.y) * 1.7;
+    vec3 lightSky = mix(vec3(0.006, 0.008, 0.016), vec3(0.16, 0.22, 0.35), dayAmt);
+    vec3 lightMoon = vec3(0.018, 0.022, 0.038) * moonUp * (1.0 - dayAmt);
+    vec3 terrLight = lightSun + lightSky + lightMoon;
 
-    // Butterflies fluttering over the flowers during the day
+    // Distant mountains, heavily hazed
+    float hm = 0.315 + (fbm(vec2(sx * 1.3 + 7.7, 2.1)) - 0.5) * 0.17;
+    float mMask = smoothstep(hm + e, hm - e, sy);
+    vec3 mCol = mix(vec3(0.075, 0.085, 0.080) * terrLight, horizonSky, 0.70);
+    col = mix(col, mCol, mMask);
+
+    // Forested mid hills with a jagged treeline silhouette
+    float hf = 0.262 + (fbm(vec2(sx * 2.3 + 3.1, 8.4)) - 0.5) * 0.09;
+    hf += (0.5 + 0.5 * vnoise(vec2(sx * 8.0, 4.2)))
+        * (0.25 + 0.75 * vnoise(vec2(sx * 85.0, 9.9))) * 0.028;
+    float fMask = smoothstep(hf + e, hf - e, sy);
+    vec3 fAlb = vec3(0.022, 0.042, 0.018) * (0.75 + 0.5 * fbm(vec2(sx * 22.0, sy * 22.0)));
+    col = mix(col, mix(fAlb * terrLight, horizonSky, 0.22), fMask);
+
+    // Near grassy hill with slope-dependent sun shading
+    float hn = 0.208 + (fbm(vec2(sx * 3.2 + 11.0, 1.7)) - 0.5) * 0.075;
+    float hnDx = 0.208 + (fbm(vec2((sx + 0.012) * 3.2 + 11.0, 1.7)) - 0.5) * 0.075;
+    float slope = (hnDx - hn) / 0.012;
+    float shade = clamp(1.0 - slope * sunDir.x * 1.5, 0.55, 1.35);
+    float nMask = smoothstep(hn + e, hn - e, sy);
+    vec3 gAlb = vec3(0.070, 0.140, 0.038) * (0.70 + 0.55 * fbm(vec2(sx * 35.0, sy * 35.0)));
+    col = mix(col, mix(gAlb * terrLight * shade, horizonSky, 0.07), nMask);
+
+    // Conifers standing on the near hill
+    vec3 treeCol = mix(vec3(0.020, 0.050, 0.014) * terrLight, horizonSky, 0.03);
+    float treeTex = 0.75 + 0.5 * vnoise(vec2(sx * 90.0, sy * 90.0));
+    float th1 = 0.208 + (fbm(vec2(-0.62 * 3.2 + 11.0, 1.7)) - 0.5) * 0.075;
+    float th2 = 0.208 + (fbm(vec2(-0.18 * 3.2 + 11.0, 1.7)) - 0.5) * 0.075;
+    float th3 = 0.208 + (fbm(vec2(0.58 * 3.2 + 11.0, 1.7)) - 0.5) * 0.075;
+    float tMask = conifer(vec2(sx + 0.62, sy - th1 + 0.006), 1.00, 3.7, e);
+    tMask = max(tMask, conifer(vec2(sx + 0.18, sy - th2 + 0.006), 0.72, 8.1, e));
+    tMask = max(tMask, conifer(vec2(sx - 0.58, sy - th3 + 0.006), 1.15, 5.9, e));
+    col = mix(col, treeCol * treeTex, tMask);
+
+    // Sheep grazing on the near hill (distant white specks with shadows)
     for (int i = 0; i < 2; i++) {
         float fi = float(i);
-        vec2 bPos = vec2(aspect * (0.28 + 0.42 * fi) + 0.10 * sin(u_time * 0.45 + fi * 3.1),
-                         0.205 + 0.045 * sin(u_time * 0.75 + fi * 1.9));
-        float flapW = 0.35 + 0.65 * abs(sin(u_time * 9.0 + fi * 2.2));
-        vec2 rel = p - bPos;
-        float wings = max(
-            ellipseMask(rel - vec2(-0.0042 * flapW, 0.0), vec2(0.0042 * flapW, 0.0052), 0.2),
-            ellipseMask(rel - vec2(0.0042 * flapW, 0.0), vec2(0.0042 * flapW, 0.0052), 0.2));
-        vec3 wingColor = mix(vec3(1.0, 0.60, 0.30), vec3(0.75, 0.55, 0.95), fi);
-        col = mix(col, wingColor, wings * daylight);
+        float xsh = mix(-0.31, 0.15, fi) + sin(t * 0.02 + fi * 3.0) * 0.03;
+        float shh = 0.208 + (fbm(vec2(xsh * 3.2 + 11.0, 1.7)) - 0.5) * 0.075;
+        vec2 srel = vec2(sx - xsh, sy - (shh - 0.011));
+        float shadow = ellipseMask(srel - vec2(0.0, -0.006), vec2(0.012, 0.003), 0.5);
+        col = mix(col, col * 0.55, shadow * 0.5 * dayAmt * nMask);
+        float body = ellipseMask(srel, vec2(0.010, 0.0068), 0.18);
+        float head = ellipseMask(srel - vec2(0.0085, 0.0005), vec2(0.0038, 0.0042), 0.25);
+        col = mix(col, vec3(0.62, 0.60, 0.55) * terrLight, body * nMask);
+        col = mix(col, vec3(0.055, 0.050, 0.048) * terrLight, head * nMask);
     }
 
-    // Fireflies wandering over the hills at night
-    vec2 gCell = floor(p * 10.0);
-    float gh = hash(gCell + 5.0);
-    vec2 gPos = (gCell + 0.5 + 0.3 * vec2(sin(u_time * 0.7 + gh * 40.0),
-                                          cos(u_time * 0.9 + gh * 60.0))) / 10.0;
-    float blink = 0.5 + 0.5 * sin(u_time * (1.0 + gh * 2.0) + gh * 30.0);
-    float firefly = exp(-distance(p, gPos) * 220.0) * step(0.75, gh) * blink;
-    col += firefly * vec3(0.7, 1.0, 0.4) * (1.0 - daylight) * m1;
+    // Foreground meadow with vertical grass-blade streaks
+    float hd = 0.128 + (fbm(vec2(sx * 4.6 + 23.0, 6.3)) - 0.5) * 0.055;
+    float dMask = smoothstep(hd + e, hd - e, sy);
+    float bladeWarp = vnoise(vec2(sy * 40.0, sx * 6.0)) * 3.0;
+    float blades = vnoise(vec2(sx * 200.0 + bladeWarp, sy * 30.0))
+                 * vnoise(vec2(sx * 47.0 + 9.0, sy * 18.0));
+    blades = 0.78 + 0.60 * blades;
+    vec3 dAlb = vec3(0.060, 0.135, 0.030) * blades
+              * (0.8 + 0.4 * fbm(vec2(sx * 12.0, sy * 12.0)));
+    vec3 dCol = dAlb * terrLight * (1.0 - 0.30 * smoothstep(hd, -0.1, sy));
+    col = mix(col, dCol, dMask);
 
-    // Slight dither to avoid gradient banding
-    col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+    // Wildflowers speckled through the meadow (day)
+    vec2 flc = floor(vec2(sx, sy) * 90.0);
+    float flh = hash12(flc + 3.3);
+    vec2 flp = (flc + vec2(hash12(flc + 1.1), hash12(flc + 2.2))) / 90.0;
+    float fld = length(vec2(sx, sy) - flp);
+    vec3 flCol = mix(vec3(0.75, 0.75, 0.70), vec3(0.85, 0.75, 0.25), step(0.6, hash12(flc + 4.4)));
+    col = mix(col, flCol * terrLight * 1.3,
+              smoothstep(0.0028, 0.0012, fld) * step(0.965, flh) * dMask * dayAmt);
+
+    // Rabbit hopping across the meadow ridge
+    float rbx = (fract(t * 0.009 + 0.3) - 0.5) * (aspect + 0.2);
+    float rbh = 0.128 + (fbm(vec2(rbx * 4.6 + 23.0, 6.3)) - 0.5) * 0.055;
+    float hop = abs(sin(t * 4.5)) * 0.009;
+    vec2 rrel = vec2(sx - rbx, sy - (rbh + 0.002 + hop));
+    float rBody = ellipseMask(rrel, vec2(0.0075, 0.0052), 0.2);
+    float rHead = ellipseMask(rrel - vec2(0.0068, 0.0042), vec2(0.0036, 0.0033), 0.25);
+    float rEars = max(ellipseMask(rrel - vec2(0.0048, 0.0100), vec2(0.0012, 0.0038), 0.3),
+                      ellipseMask(rrel - vec2(0.0078, 0.0096), vec2(0.0012, 0.0035), 0.3));
+    col = mix(col, vec3(0.085, 0.062, 0.045) * terrLight, max(rBody, max(rHead, rEars)));
+
+    // Butterflies over the meadow (day)
+    for (int i = 0; i < 2; i++) {
+        float fi = float(i);
+        vec2 bp = vec2(mix(-0.30, 0.28, fi) + 0.14 * sin(t * 0.35 + fi * 3.1),
+                       0.165 + 0.035 * sin(t * 0.8 + fi * 1.9));
+        float flapB = 0.4 + 0.6 * abs(sin(t * 9.0 + fi * 2.0));
+        float bf = smoothstep(0.0038 * flapB, 0.0012, length(vec2(sx, sy) - bp));
+        vec3 bCol = mix(vec3(0.85, 0.70, 0.30), vec3(0.80, 0.80, 0.85), fi);
+        col = mix(col, bCol * terrLight * 1.5, bf * dayAmt * 0.9);
+    }
+
+    // Fireflies drifting over the meadow at night
+    vec2 gCell = floor(vec2(sx, sy) * 12.0);
+    float gh = hash12(gCell + 5.0);
+    vec2 gPos = (gCell + 0.5 + 0.32 * vec2(sin(t * 0.6 + gh * 40.0),
+                                           cos(t * 0.8 + gh * 60.0))) / 12.0;
+    float blink = max(sin(t * (0.8 + gh * 1.5) + gh * 30.0), 0.0);
+    float firefly = exp(-length(vec2(sx, sy) - gPos) * 400.0) * step(0.72, gh) * blink * blink;
+    col += firefly * vec3(0.35, 0.60, 0.12) * (1.0 - dayAmt) * max(dMask, nMask);
+
+    // ------ Exposure, filmic tonemap, gamma, vignette ------
+    col = aces(col * 1.35);
+    col = pow(col, vec3(0.4545));
+    col *= 1.0 - 0.30 * dot(fragUV - 0.5, fragUV - 0.5);
+    col += (hash12(gl_FragCoord.xy) - 0.5) / 255.0;
 
     gl_FragColor = vec4(col, 1.0);
 }
